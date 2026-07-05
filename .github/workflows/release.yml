@@ -93,7 +93,12 @@ jobs:
           Note: Current desktop builds are unsigned/ad-hoc signed development builds, so macOS Gatekeeper or Windows SmartScreen may show a warning.
           EOF
           mapfile -t ASSETS < <(find release-assets -type f | sort)
+          if [ "${#ASSETS[@]}" -eq 0 ]; then
+            echo "No release assets found."
+            exit 1
+          fi
           gh release create "$GITHUB_REF_NAME" \
             "${ASSETS[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
             --title "StudyAI Recorder ${GITHUB_REF_NAME}" \
             --notes-file release-notes.md
