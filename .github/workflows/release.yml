@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  macos-package:
+    name: Package macOS App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Release Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          scripts/package_release.sh "$VERSION"
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: dist/release/*
+
+  windows-package:
+    name: Package Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Dependencies
+        working-directory: windows
+        run: npm ci
+
+      - name: Build Windows Installer
+        working-directory: windows
+        run: npm run dist
+
+      - name: Stage Windows Package
+        shell: pwsh
+        run: |
+          $version = "${env:GITHUB_REF_NAME}".TrimStart("v")
+          New-Item -ItemType Directory -Force -Path dist/release | Out-Null
+          $exe = Get-ChildItem windows/dist -Filter "*.exe" | Select-Object -First 1
+          Copy-Item $exe.FullName "dist/release/StudyAI-Recorder-v$version-Windows-x64-Setup.exe"
+          Get-FileHash "dist/release/StudyAI-Recorder-v$version-Windows-x64-Setup.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  StudyAI-Recorder-v$version-Windows-x64-Setup.exe" } |
+            Set-Content "dist/release/StudyAI-Recorder-v$version-Windows-x64-Setup.exe.sha256"
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: dist/release/*
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [macos-package, windows-package]
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cat > release-notes.md <<EOF
+          StudyAI Recorder ${GITHUB_REF_NAME}
+
+          Assets:
+          - macOS arm64 app zip
+          - Windows x64 installer exe
+          - SHA256 checksum files
+
+          Note: Current desktop builds are unsigned/ad-hoc signed development builds, so macOS Gatekeeper or Windows SmartScreen may show a warning.
+          EOF
+          mapfile -t ASSETS < <(find release-assets -type f | sort)
+          gh release create "$GITHUB_REF_NAME" \
+            "${ASSETS[@]}" \
+            --title "StudyAI Recorder ${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md

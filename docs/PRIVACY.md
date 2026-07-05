@@ -11,16 +11,21 @@ StudyAI Recorder is designed to keep user data local unless the user explicitly 
 - Optional snapshot paths
 - Optional OCR text snippets
 
-## Keychain
+## API Key Storage
 
-API keys are stored with macOS Keychain through `KeychainStore.swift`.
+API keys are stored locally and are not written to the repository:
+
+- macOS: Keychain through `KeychainStore.swift`.
+- Windows: Electron `safeStorage` encryption, with encrypted values stored inside the Windows app data directory.
 
 ## Screen Capture and OCR
 
 Screen snapshots are disabled by default. When enabled:
 
 - Snapshots are saved locally.
-- OCR is performed locally using Apple's Vision framework.
+- OCR is performed locally before summary context is prepared.
+- macOS uses Apple's Vision framework.
+- Windows uses local Windows OCR APIs on captured screenshots when available.
 - OCR text may be included in AI summary context.
 
 ## Sent to AI Provider

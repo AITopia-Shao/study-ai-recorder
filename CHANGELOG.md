@@ -10,3 +10,4 @@
 - Added deterministic learning score rubric.
 - Added learning-management agent skills and strict JSON report rendering.
 - Added boulevard and starlight visual themes.
+- Added GitHub Release packaging for macOS and Windows installer builds.

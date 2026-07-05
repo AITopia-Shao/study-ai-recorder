@@ -1,17 +1,18 @@
 # StudyAI Recorder
 
-StudyAI Recorder is a native macOS learning planner and activity journal. It combines lightweight planning, goal tracking, foreground app/window monitoring, optional local screen OCR, and a structured AI learning-management agent that turns each day into a concise review.
+StudyAI Recorder is a cross-platform learning planner and activity journal. It combines lightweight planning, goal tracking, foreground app/window monitoring, optional local screen OCR, and a structured AI learning-management agent that turns each day into a concise review.
 
 The app is designed for learners and builders who want a private, local-first record of what they planned, what they actually did, and what to improve tomorrow.
 
 ## Highlights
 
 - Native SwiftUI macOS app
+- Windows parity build packaged as an Electron desktop app
 - Plan mode for daily tasks
 - Goal mode for longer learning outcomes
 - Foreground app and window-title sampling
 - Optional screen snapshots with on-device OCR
-- Local Keychain storage for API keys
+- Local secure API key handling: macOS Keychain and Windows safeStorage encryption
 - OpenAI-compatible chat completions endpoint support
 - Stable AI review pipeline with deterministic local scoring
 - Day theme inspired by a tree-lined boulevard
@@ -41,9 +42,11 @@ This keeps scores more consistent and prevents long, drifting, or overly chatty 
 
 ## Requirements
 
-- macOS 14 or later
-- Apple Command Line Tools or Xcode
-- Swift Package Manager
+- macOS 14 or later for the native SwiftUI app
+- Windows 10 or later for the Electron parity app
+- Apple Command Line Tools or Xcode for macOS builds
+- Swift Package Manager for macOS builds
+- Node.js/npm for Windows builds
 - An OpenAI-compatible chat completions API if you want AI summaries
 
 ## Run Locally
@@ -66,6 +69,25 @@ open "dist/StudyAI Recorder.app"
 
 The generated app bundle is ignored by git and lives under `dist/`.
 
+## Package a Release
+
+```bash
+chmod +x scripts/package_release.sh
+scripts/package_release.sh 0.1.0
+```
+
+This creates a macOS package:
+
+- `dist/release/StudyAI-Recorder-v0.1.0-macOS-arm64.zip`
+- `dist/release/StudyAI-Recorder-v0.1.0-macOS-arm64.zip.sha256`
+
+Current public downloads are published from GitHub Releases. Tagged releases also build a Windows installer:
+
+- `StudyAI-Recorder-v0.1.0-Windows-x64-Setup.exe`
+- `StudyAI-Recorder-v0.1.0-Windows-x64-Setup.exe.sha256`
+
+The Windows app is an Electron parity build with the same product surface as the macOS app: plan mode, goal mode, foreground process/window monitoring, optional screenshots with best-effort local OCR, themes, stable scoring, and OpenAI-compatible AI summaries.
+
 ## AI Setup
 
 Open Settings in the app and configure:
@@ -74,16 +96,16 @@ Open Settings in the app and configure:
 - Model, for example `gpt-4o-mini`
 - API Key
 
-API keys are saved in macOS Keychain and are not written to the repository.
+API keys are saved locally and are not written to the repository.
 
 ## Privacy
 
 StudyAI Recorder is local-first:
 
 - Tasks, goals, activity samples, and summaries are stored locally.
-- API keys are stored in Keychain.
+- API keys are stored locally: macOS Keychain on macOS; Electron safeStorage-encrypted values in Windows app data on Windows.
 - Screen snapshots and OCR are disabled by default.
-- OCR is performed locally with Apple's Vision framework before any text is sent to the AI endpoint.
+- OCR is performed locally before any text is sent to the AI endpoint: Apple's Vision framework on macOS, Windows OCR APIs on Windows.
 - When AI summary generation is used, selected task, goal, timeline, app usage, and OCR text context is sent to the configured API provider.
 
 See [docs/PRIVACY.md](docs/PRIVACY.md) for details.
@@ -94,12 +116,14 @@ Local database:
 
 ```text
 ~/Library/Application Support/StudyAIRecorder/database.json
+%APPDATA%/StudyAI Recorder/database.json
 ```
 
 Optional snapshots:
 
 ```text
 ~/Library/Application Support/StudyAIRecorder/Snapshots/
+%APPDATA%/StudyAI Recorder/Snapshots/
 ```
 
 ## Project Structure
@@ -115,6 +139,10 @@ Sources/StudyAIRecorder/
   Models.swift            Codable domain models and settings
   Storage.swift           local JSON database
   Views.swift             SwiftUI screens and theme system
+windows/
+  main.js                 Electron main process, storage, monitoring, screenshots, OCR, AI summaries
+  preload.js              Safe renderer bridge
+  src/                    Windows parity UI
 ```
 
 ## Roadmap

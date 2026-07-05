@@ -1,0 +1,47 @@
+{
+  "name": "study-ai-recorder-windows",
+  "version": "0.1.0",
+  "description": "Windows desktop parity build for StudyAI Recorder.",
+  "main": "main.js",
+  "author": "AITopia Shao",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.aitopia.study-ai-recorder",
+    "productName": "StudyAI Recorder",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "StudyAI Recorder"
+    }
+  }
+}

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="${1:-0.1.0}"
 APP_NAME="StudyAI Recorder"
 BINARY_NAME="StudyAIRecorder"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
@@ -34,7 +35,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$VERSION</string>
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>LSMinimumSystemVersion</key>

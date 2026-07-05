@@ -1,6 +1,6 @@
 # Architecture
 
-StudyAI Recorder is a local-first SwiftUI macOS app built as a Swift Package executable target.
+StudyAI Recorder is a local-first desktop app. The primary macOS implementation is a SwiftUI app built as a Swift Package executable target, and the Windows release is an Electron parity build that keeps the same product surface and data model.
 
 ## Layers
 
@@ -12,14 +12,15 @@ StudyAI Recorder is a local-first SwiftUI macOS app built as a Swift Package exe
 - AI provider client: `AIClient.swift`
 - Learning agent pipeline: `LearningAgent.swift`
 - Secrets: `KeychainStore.swift`
+- Windows parity: `windows/main.js`, `windows/preload.js`, `windows/src/`
 
 ## Data Flow
 
 1. The user creates plans and goals in SwiftUI views.
 2. `AppState` persists changes to the local JSON database.
 3. `ActivityMonitor` samples the foreground app and active window title.
-4. Optional snapshots are captured with `screencapture`.
-5. Optional OCR runs locally through Apple's Vision framework.
+4. Optional snapshots are captured locally.
+5. Optional OCR runs locally through platform OCR APIs.
 6. `LearningDayContext` compacts tasks, goals, samples, app usage, timeline blocks, and OCR snippets.
 7. `LearningScoreRubric` computes a deterministic score.
 8. `AIClient` sends a locked-score prompt to an OpenAI-compatible API.
@@ -47,4 +48,4 @@ The app stores user data under:
 ~/Library/Application Support/StudyAIRecorder/
 ```
 
-API keys are stored in Keychain, not in the JSON database.
+API keys are not stored as plaintext in the JSON database. macOS uses Keychain; Windows stores Electron safeStorage-encrypted values in the app data database.

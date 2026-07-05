@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudyAI Recorder</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>
+          <strong>Study Trace</strong>
+          <span>AI 学习记录</span>
+        </div>
+      </div>
+
+      <nav>
+        <button class="nav active" data-view="today">今日轨迹</button>
+        <button class="nav" data-view="plan">计划</button>
+        <button class="nav" data-view="goals">目标</button>
+        <button class="nav" data-view="monitor">监控</button>
+        <button class="nav" data-view="summary">AI 总结</button>
+        <button class="nav" data-view="settings">设置</button>
+      </nav>
+
+      <div class="recorder">
+        <span id="recordDot"></span>
+        <div>
+          <strong id="recordState">记录暂停</strong>
+          <small id="latestApp">等待采样</small>
+        </div>
+        <button id="toggleRecord">开始</button>
+      </div>
+    </aside>
+
+    <main>
+      <section id="today" class="view active">
+        <header>
+          <div>
+            <h1>今日轨迹</h1>
+            <p id="todayDate"></p>
+          </div>
+          <div class="actions">
+            <select id="modePicker"><option value="plan">计划模式</option><option value="goal">目标模式</option></select>
+            <button id="quickSummary">生成 AI 总结</button>
+          </div>
+        </header>
+
+        <div class="metrics">
+          <article><span>今日任务</span><strong id="metricTasks">0</strong></article>
+          <article><span>已完成</span><strong id="metricDone">0</strong></article>
+          <article><span>记录时长</span><strong id="metricMinutes">0 分</strong></article>
+          <article><span>AI 评分</span><strong id="metricScore">-</strong></article>
+        </div>
+
+        <div class="grid">
+          <article class="card">
+            <h2>快速添加</h2>
+            <input id="taskTitle" placeholder="今天要完成什么" />
+            <textarea id="taskNote" placeholder="备注"></textarea>
+            <div class="row">
+              <input id="taskProject" placeholder="项目" value="学习" />
+              <input id="taskMinutes" type="number" min="5" step="5" value="45" />
+            </div>
+            <div class="row">
+              <select id="taskPriority"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option></select>
+              <button id="addTask">添加</button>
+            </div>
+          </article>
+          <article class="card">
+            <h2 id="taskListTitle">今日计划</h2>
+            <div id="taskList" class="list"></div>
+          </article>
+          <article class="card">
+            <h2>应用时间</h2>
+            <div id="appUsage" class="list"></div>
+          </article>
+          <article class="card">
+            <h2>窗口轨迹</h2>
+            <div id="timeline" class="list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="plan" class="view">
+        <header><div><h1>计划</h1><p>把今天的学习拆成可以完成的动作。</p></div></header>
+        <article class="card"><div id="planTasks" class="list"></div></article>
+      </section>
+
+      <section id="goals" class="view">
+        <header><div><h1>目标</h1><p>把学习愿望变成有期限、有衡量方式的推进线。</p></div></header>
+        <article class="card form">
+          <input id="goalTitle" placeholder="目标名称" />
+          <textarea id="goalPurpose" placeholder="为什么做"></textarea>
+          <input id="goalMetric" placeholder="衡量方式" />
+          <input id="goalDays" type="number" min="1" value="14" />
+          <button id="addGoal">添加目标</button>
+        </article>
+        <article class="card"><div id="goalList" class="list"></div></article>
+      </section>
+
+      <section id="monitor" class="view">
+        <header>
+          <div><h1>监控</h1><p>进程、窗口与可选屏幕快照/OCR。</p></div>
+          <button id="sampleNow">立即采样</button>
+        </header>
+        <article class="card"><pre id="latestSample">暂无采样</pre></article>
+      </section>
+
+      <section id="summary" class="view">
+        <header>
+          <div><h1>AI 总结</h1><p>稳定评分、结构化复盘、短建议。</p></div>
+          <button id="generateSummary">生成</button>
+        </header>
+        <article class="card"><pre id="summaryBody">还没有总结。</pre></article>
+      </section>
+
+      <section id="settings" class="view">
+        <header><div><h1>设置</h1><p>AI、采样、主题与本地记录。</p></div></header>
+        <article class="card form">
+          <label>API URL<input id="baseURL" /></label>
+          <label>模型<input id="model" /></label>
+          <label>API Key<input id="apiKey" type="password" placeholder="使用 Electron safeStorage 加密保存" /></label>
+          <label>主题<select id="theme"><option value="boulevard">林荫大道</option><option value="starlight">星空</option></select></label>
+          <label>采样间隔<select id="sampleInterval"><option value="15">15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option><option value="120">120 秒</option></select></label>
+          <label class="check"><input id="includeWindowTitles" type="checkbox" /> 记录窗口标题</label>
+          <label class="check"><input id="captureScreenshots" type="checkbox" /> 保存屏幕快照并尝试本地 OCR</label>
+          <label>快照间隔（分钟）<input id="screenshotInterval" type="number" min="5" step="5" value="15" /></label>
+          <button id="saveSettings">保存设置</button>
+          <p id="settingsStatus"></p>
+        </article>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

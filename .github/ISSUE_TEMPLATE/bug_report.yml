@@ -18,10 +18,10 @@ body:
     validations:
       required: true
   - type: input
-    id: macos
+    id: platform
     attributes:
-      label: macOS version
-      placeholder: "macOS 14.x"
+      label: Platform and version
+      placeholder: "macOS 14.x or Windows 11 23H2"
   - type: textarea
     id: notes
     attributes:
