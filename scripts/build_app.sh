@@ -7,6 +7,7 @@ BINARY_NAME="StudyAIRecorder"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
+RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
 cd "$ROOT_DIR"
 export CLANG_MODULE_CACHE_PATH="$ROOT_DIR/.build/clang-module-cache"
@@ -14,6 +15,7 @@ export SWIFTPM_MODULECACHE_OVERRIDE="$ROOT_DIR/.build/swiftpm-module-cache"
 swift build -c release --disable-sandbox --cache-path "$ROOT_DIR/.build/swiftpm-cache"
 
 mkdir -p "$MACOS_DIR"
+mkdir -p "$RESOURCES_DIR"
 cp ".build/release/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
