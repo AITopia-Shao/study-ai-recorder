@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:-0.1.0}"
-APP_NAME="StudyAI Recorder"
+APP_NAME="Trace"
 BINARY_NAME="StudyAIRecorder"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
@@ -29,7 +29,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundleExecutable</key>
   <string>$BINARY_NAME</string>
   <key>CFBundleIdentifier</key>
-  <string>local.study-ai-recorder</string>
+  <string>local.trace</string>
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundlePackageType</key>

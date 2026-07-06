@@ -12,37 +12,12 @@ struct AIClient {
             throw AIClientError.missingAPIKey
         }
 
-        let endpoint = try chatCompletionsURL(baseURL: settings.baseURL)
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 90
-
         let messages = [
             ChatMessage(role: "system", content: StudyAgentPromptBuilder.systemPrompt(settings: settings)),
             ChatMessage(role: "user", content: StudyAgentPromptBuilder.userPrompt(context: context, score: score))
         ]
 
-        request.httpBody = try JSONEncoder().encode(
-            ChatRequest(
-                model: settings.model,
-                messages: messages,
-                temperature: 0.1
-            )
-        )
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            let body = String(data: data, encoding: .utf8) ?? "空响应"
-            throw AIClientError.badResponse(body)
-        }
-
-        let decoded = try JSONDecoder().decode(ChatResponse.self, from: data)
-        let content = decoded.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let content, !content.isEmpty else {
-            throw AIClientError.badResponse("AI 没有返回可读总结。")
-        }
+        let content = try await sendChat(messages: messages, temperature: 0.1)
 
         let report = try Self.decodeReport(from: content)
             .normalized(context: context, score: score)
@@ -70,6 +45,54 @@ struct AIClient {
             body: body,
             model: "本地启发式"
         )
+    }
+
+    func runPlanningCoach(input: String, database: AppDatabase) async throws -> CoachAgentResponse {
+        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw AIClientError.missingAPIKey
+        }
+
+        let context = PlanningCoachContext(database: database)
+        let messages = [
+            ChatMessage(role: "system", content: PlanningCoachPromptBuilder.systemPrompt(settings: settings)),
+            ChatMessage(role: "user", content: PlanningCoachPromptBuilder.userPrompt(input: input, context: context))
+        ]
+
+        let content = try await sendChat(messages: messages, temperature: 0.2)
+        return try PlanningCoachAgent.decodeResponse(
+            from: content,
+            fallbackReply: "我读完了当前规划上下文，但模型回复没有给出可展示内容。"
+        )
+    }
+
+    private func sendChat(messages: [ChatMessage], temperature: Double) async throws -> String {
+        let endpoint = try chatCompletionsURL(baseURL: settings.baseURL)
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 120
+
+        request.httpBody = try JSONEncoder().encode(
+            ChatRequest(
+                model: settings.model,
+                messages: messages,
+                temperature: temperature
+            )
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? "空响应"
+            throw AIClientError.badResponse(body)
+        }
+
+        let decoded = try JSONDecoder().decode(ChatResponse.self, from: data)
+        let content = decoded.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let content, !content.isEmpty else {
+            throw AIClientError.badResponse("AI 没有返回可读内容。")
+        }
+        return content
     }
 
     private func chatCompletionsURL(baseURL: String) throws -> URL {
@@ -114,18 +137,18 @@ enum AIClientError: LocalizedError {
     }
 }
 
-private struct ChatRequest: Encodable {
+struct ChatRequest: Encodable {
     let model: String
     let messages: [ChatMessage]
     let temperature: Double
 }
 
-private struct ChatMessage: Codable {
+struct ChatMessage: Codable {
     let role: String
     let content: String
 }
 
-private struct ChatResponse: Decodable {
+struct ChatResponse: Decodable {
     struct Choice: Decodable {
         struct Message: Decodable {
             let content: String

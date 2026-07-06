@@ -7,12 +7,23 @@ const { randomUUID } = require("crypto");
 const DEFAULT_SETTINGS = {
   baseURL: "https://api.openai.com/v1",
   model: "gpt-4o-mini",
-  visualTheme: "boulevard",
+  visualTheme: "day",
   sampleInterval: 30,
   includeWindowTitles: true,
   captureScreenshots: false,
   screenshotIntervalMinutes: 15,
   maxSamplesPerDay: 2400,
+  enabledAgentSkillIDs: [
+    "evidenceAudit",
+    "scoringRubric",
+    "trajectorySynthesis",
+    "goalAlignment",
+    "focusRecovery",
+    "tomorrowPlanning"
+  ],
+  deterministicScoring: true,
+  compactSummaryStyle: true,
+  customSidebarColor: { red: 8, green: 27, blue: 20 },
   encryptedAPIKey: ""
 };
 
@@ -21,6 +32,12 @@ const DEFAULT_DB = {
   goals: [],
   samples: [],
   summaries: [],
+  coachMessages: [],
+  coachIdentity: { id: "", title: "", createdAt: "", updatedAt: "" },
+  coachConversations: [],
+  activeCoachConversationId: "",
+  archivedCoachConversations: [],
+  coachMemory: { summary: "", keyFacts: [], updatedAt: "" },
   settings: DEFAULT_SETTINGS
 };
 
@@ -34,14 +51,29 @@ function snapshotFolder(dateKey) {
   return path.join(app.getPath("userData"), "Snapshots", dateKey);
 }
 
+function coachFilesFolder() {
+  return path.join(app.getPath("userData"), "CoachFiles");
+}
+
+function coachArchiveFolder(identityTitle) {
+  return path.join(app.getPath("userData"), "CoachArchives", safePathSegment(identityTitle || "未设置身份"));
+}
+
 async function readDatabase() {
   try {
     const raw = await fs.readFile(databasePath(), "utf8");
     const parsed = JSON.parse(raw);
+    const settings = { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) };
+    if (settings.visualTheme === "boulevard" || settings.visualTheme === "system") settings.visualTheme = "day";
+    if (settings.visualTheme === "starlight") settings.visualTheme = "night";
+    settings.customSidebarColor = {
+      ...DEFAULT_SETTINGS.customSidebarColor,
+      ...(settings.customSidebarColor || {})
+    };
     return {
       ...DEFAULT_DB,
       ...parsed,
-      settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) }
+      settings
     };
   } catch {
     return JSON.parse(JSON.stringify(DEFAULT_DB));
@@ -88,7 +120,7 @@ function createWindow() {
     height: 760,
     minWidth: 1080,
     minHeight: 720,
-    title: "StudyAI Recorder",
+    title: "Trace",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -100,7 +132,17 @@ function createWindow() {
 }
 
 function dayKey(date = new Date()) {
-  return date.toISOString().slice(0, 10);
+  const value = date instanceof Date ? date : new Date(date || Date.now());
+  const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function dateTimeText(value) {
+  return new Date(value || Date.now()).toLocaleString("zh-CN", { hour12: false });
+}
+
+function monthKey(value = new Date()) {
+  return dayKey(value).slice(0, 7);
 }
 
 function uuid() {
@@ -254,9 +296,31 @@ function appDurations(samples, sampleInterval) {
     .sort((a, b) => b.minutes - a.minutes);
 }
 
+function tasksForToday(tasks, date = new Date()) {
+  const key = dayKey(date);
+  return (tasks || [])
+    .filter((task) => {
+      const start = dayKey(task.startDate || task.createdAt || task.targetDate || date);
+      const target = dayKey(task.targetDate || date);
+      const completed = task.completedAt ? dayKey(task.completedAt) : "";
+      const isActive = start <= key && key <= target && task.status !== "done";
+      const completedToday = completed === key;
+      const overdue = target < key && task.status !== "done";
+      return isActive || completedToday || overdue;
+    })
+    .sort((a, b) => {
+      const rank = (task) => {
+        if (task.status === "done") return 2;
+        if (dayKey(task.targetDate) < key) return 0;
+        return 1;
+      };
+      return rank(a) - rank(b) || String(a.targetDate || "").localeCompare(String(b.targetDate || ""));
+    });
+}
+
 function analyzeDay(db) {
   const today = dayKey();
-  const tasks = db.tasks.filter((task) => String(task.targetDate || "").slice(0, 10) === today);
+  const tasks = tasksForToday(db.tasks, new Date());
   const goals = db.goals || [];
   const samples = samplesOnToday(db.samples || []);
   const done = tasks.filter((task) => task.status === "done").length;
@@ -370,7 +434,7 @@ Return JSON only:
         model: db.settings.model,
         temperature: 0.1,
         messages: [
-          { role: "system", content: "你是 StudyAI Learning Agent。只使用证据，评分已锁定，不要改分。只返回 JSON。" },
+          { role: "system", content: "你是 Trace 教练的总结子代理。只使用证据，评分已锁定，不要改分。只返回 JSON。" },
           { role: "user", content: prompt }
         ]
       })
@@ -424,6 +488,214 @@ function asList(values, count) {
   return (values || []).slice(0, count).map((value, index) => `${index + 1}. ${value}`);
 }
 
+function planningContext(db) {
+  const tasks = (db.tasks || []).map((task) => {
+    const journal = (task.journal || []).slice(0, 3).map((entry) => `${entry.createdAt}: ${entry.title || "未命名记录"} - ${entry.body}`).join("；");
+    return `- id=${task.id} | 开始:${dayKey(task.startDate || task.createdAt || task.targetDate)} | 完成:${dayKey(task.targetDate)} | [${task.status}] ${task.title} | 项目:${task.project || "学习"} | 预计:${task.estimatedMinutes || 45} 分 | 优先级:${task.priority || "medium"} | 备注:${task.note || ""} | 完成记录:${task.completionNote || ""} | 日记:${journal}`;
+  }).join("\n") || "无计划";
+
+  const goals = (db.goals || []).map((goal) => {
+    const milestones = (goal.milestones || []).map((item) => `${item.isDone ? "已完成" : "未完成"}-${item.title}`).join("；");
+    const logs = (goal.logs || []).slice(0, 5).map((entry) => `${entry.createdAt}: ${entry.title || "未命名记录"} - ${entry.body}`).join("；");
+    return `- id=${goal.id} | ${goal.title} | 目的:${goal.purpose || ""} | 衡量:${goal.metric || "完成可验证产出"} | 截止:${dayKey(goal.targetDate)} | 里程碑:${milestones} | 阶段日志:${logs}`;
+  }).join("\n") || "无目标";
+
+  const day = analyzeDay(db);
+  const activeMessages = activeCoachMessages(db);
+  const messages = activeMessages.slice(-16).map((message) => `- ${message.role}: ${String(message.content || "").slice(0, 260)}`).join("\n");
+  const memory = db.coachMemory || {};
+  const identity = db.coachIdentity?.title?.trim() || "未设置身份";
+
+  return `
+TODAY: ${day.today}
+IDENTITY: ${identity}
+MEMORY:
+摘要:${memory.summary || "暂无长期记忆"}
+关键事实:${(memory.keyFacts || []).join("；")}
+
+PLANS:
+${tasks}
+
+GOALS:
+${goals}
+
+ACTIVITY:
+记录时长:${day.activeMinutes} 分钟
+应用分布:
+${day.appText || "暂无"}
+窗口轨迹:
+${day.timelineText || "暂无"}
+
+RECENT_CONVERSATION:
+${messages || "暂无"}
+`;
+}
+
+function activeCoachMessages(db) {
+  const activeId = db.activeCoachConversationId;
+  const conversation = (db.coachConversations || []).find((item) => item.id === activeId) || (db.coachConversations || [])[0];
+  return conversation?.messages || db.coachMessages || [];
+}
+
+function localCoachTurn(db, reason = "") {
+  const day = analyzeDay(db);
+  return {
+    reply: `AI 服务暂时不可用，我先读取本地上下文：计划 ${(db.tasks || []).length} 个，目标 ${(db.goals || []).length} 个，今日记录约 ${day.activeMinutes} 分钟。${reason ? `服务原因：${reason}` : ""}`,
+    actions: [],
+    memory_update: db.coachMemory?.summary || "",
+    key_facts: db.coachMemory?.keyFacts || []
+  };
+}
+
+function normalizeCoachResponse(text, db) {
+  try {
+    const jsonText = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
+    const parsed = JSON.parse(jsonText);
+    return {
+      reply: String(parsed.reply || "我已读取当前规划上下文。").slice(0, 1200),
+      actions: Array.isArray(parsed.actions) ? parsed.actions.slice(0, 12) : [],
+      memory_update: parsed.memory_update || "",
+      key_facts: Array.isArray(parsed.key_facts) ? parsed.key_facts.slice(0, 8) : [],
+      daily_summary: parsed.daily_summary || null
+    };
+  } catch (error) {
+    return localCoachTurn(db, `教练 JSON 解析失败：${error.message}`);
+  }
+}
+
+async function runPlanningCoach(db, userInput) {
+  const apiKey = decryptAPIKey(db.settings.encryptedAPIKey);
+  if (!apiKey) return localCoachTurn(db, "API Key 未配置。");
+
+  const endpoint = `${String(db.settings.baseURL || "").replace(/\/+$/, "")}/chat/completions`;
+  const system = `
+你是 Trace 的“教练”，不是单纯总结工具。你采用 claw-code 式 agent 运行边界：会话消息、工具动作、权限边界、文件操作、记忆更新、上下文压缩。
+
+语义：
+- 计划 = 短期、明确、可执行的战术动作。
+- 目标 = 长期、笼统、战略性的方向，必须体现目的、衡量方式、阶段日志。
+
+可输出工具动作：
+add_plan, update_plan, delete_plan, complete_plan, add_plan_log,
+add_goal, update_goal, delete_goal, add_goal_log,
+read_planning_context, list_coach_files, read_coach_file, write_coach_file.
+
+权限边界：
+- 只能操作计划、目标、日志、总结、活动记录和教练文件区。
+- 删除前必须在 reply 中明确说明删除对象；无法确定 target_id 时不要删除。
+- 不编造活动记录、日志或文件内容。
+- 文件操作只限教练文件区。
+
+只返回 JSON:
+{
+  "reply": "给用户看的中文回复",
+  "actions": [{"type":"add_plan","target_id":"可选","title":"可选","note":"可选","project":"可选","start_date":"yyyy-MM-dd","target_date":"yyyy-MM-dd","date":"yyyy-MM-dd","estimated_minutes":45,"priority":"low|medium|high","purpose":"可选","metric":"可选","days":30,"body":"可选","file_name":"可选.md","content":"可选"}],
+  "memory_update": "可选",
+  "key_facts": [],
+  "daily_summary": {"executive_summary":"可选","highlights":[],"obstacles":[],"recommendations":[],"tomorrow_plan":[],"data_warnings":[]}
+}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: db.settings.model,
+        temperature: 0.2,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: `USER_INPUT:\n${userInput}\n\nCONTEXT:\n${planningContext(db)}` }
+        ]
+      })
+    });
+
+    if (!response.ok) return localCoachTurn(db, (await response.text()).slice(0, 220));
+    const payload = await response.json();
+    return normalizeCoachResponse(payload.choices?.[0]?.message?.content || "", db);
+  } catch (error) {
+    return localCoachTurn(db, error.message);
+  }
+}
+
+function safeCoachFileName(value) {
+  const raw = String(value || "coach-note.md").trim();
+  const cleaned = raw.replace(/[^a-zA-Z0-9._ -]/g, "-").replace(/^[. ]+|[. ]+$/g, "");
+  return cleaned ? (cleaned.includes(".") ? cleaned : `${cleaned}.md`) : "coach-note.md";
+}
+
+function safePathSegment(value) {
+  const clean = String(value || "未设置身份")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/^[. ]+|[. ]+$/g, "")
+    .slice(0, 80);
+  return clean || "未设置身份";
+}
+
+async function listCoachFiles() {
+  try {
+    await fs.mkdir(coachFilesFolder(), { recursive: true });
+    const names = await fs.readdir(coachFilesFolder());
+    const files = [];
+    for (const name of names) {
+      const filePath = path.join(coachFilesFolder(), name);
+      const stat = await fs.stat(filePath);
+      if (!stat.isFile()) continue;
+      const content = await fs.readFile(filePath, "utf8").catch(() => "");
+      files.push({ name, path: filePath, modifiedAt: stat.mtime.toISOString(), preview: content.slice(0, 160) });
+    }
+    return files.sort((a, b) => String(b.modifiedAt).localeCompare(String(a.modifiedAt)));
+  } catch {
+    return [];
+  }
+}
+
+async function readCoachFile(fileName) {
+  try {
+    const name = safeCoachFileName(fileName);
+    const content = await fs.readFile(path.join(coachFilesFolder(), name), "utf8");
+    return { ok: true, name, content };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+async function writeCoachFile(fileName, content) {
+  try {
+    const name = safeCoachFileName(fileName);
+    const text = String(content || "");
+    if (!text.trim()) return { ok: false, error: "内容为空" };
+    await fs.mkdir(coachFilesFolder(), { recursive: true });
+    await fs.writeFile(path.join(coachFilesFolder(), name), text, "utf8");
+    return { ok: true, name };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+async function writeCoachArchive(archive, reason) {
+  try {
+    const identityTitle = archive?.identityTitle || "未设置身份";
+    const folder = coachArchiveFolder(identityTitle);
+    await fs.mkdir(folder, { recursive: true });
+    const archivedAt = archive?.archivedAt || new Date().toISOString();
+    const shortId = String(archive?.id || uuid()).slice(0, 8);
+    const fileName = `${dayKey(archivedAt)}-${shortId}.md`;
+    const filePath = path.join(folder, fileName);
+    const messages = (archive?.messages || []).map((message) => {
+      const role = { user: "我", assistant: "教练", tool: "工具", system: "系统" }[message.role] || "教练";
+      return `## ${role} · ${dateTimeText(message.createdAt)}\n\n${message.content || ""}`;
+    }).join("\n\n");
+    const content = `# ${archive?.title || "归档对话"}\n\n身份：${identityTitle}\n归档时间：${dateTimeText(archivedAt)}\n原因：${reason || "每日自动归档"}\n\n## 记忆\n\n${archive?.memorySummary || "暂无记忆摘要"}\n\n${(archive?.keyFacts || []).length ? `关键事实：${archive.keyFacts.join("；")}\n\n` : ""}## 对话\n\n${messages || "暂无对话"}\n`;
+    await fs.writeFile(filePath, content, "utf8");
+    return { ok: true, path: filePath };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 ipcMain.handle("database:load", async () => {
   const db = await readDatabase();
   return publicDatabase(db);
@@ -431,10 +703,17 @@ ipcMain.handle("database:load", async () => {
 
 ipcMain.handle("database:save", async (_event, db) => {
   const previous = await readDatabase();
+  const settings = { ...DEFAULT_SETTINGS, ...(db.settings || {}) };
+  if (settings.visualTheme === "boulevard" || settings.visualTheme === "system") settings.visualTheme = "day";
+  if (settings.visualTheme === "starlight") settings.visualTheme = "night";
+  settings.customSidebarColor = {
+    ...DEFAULT_SETTINGS.customSidebarColor,
+    ...(settings.customSidebarColor || {})
+  };
   const next = {
     ...DEFAULT_DB,
     ...db,
-    settings: { ...DEFAULT_SETTINGS, ...(db.settings || {}) }
+    settings
   };
   if (db.apiKeyDraft !== undefined) {
     next.settings.encryptedAPIKey = encryptAPIKey(db.apiKeyDraft);
@@ -462,8 +741,29 @@ ipcMain.handle("summary:generate", async (_event, db) => {
   };
   return generateAISummary(input);
 });
+ipcMain.handle("coach:turn", async (_event, db, userInput) => {
+  const stored = await readDatabase();
+  const input = {
+    ...stored,
+    ...db,
+    settings: {
+      ...stored.settings,
+      ...(db.settings || {}),
+      encryptedAPIKey: stored.settings.encryptedAPIKey || ""
+    }
+  };
+  return runPlanningCoach(input, userInput);
+});
+ipcMain.handle("coach:file:list", async () => listCoachFiles());
+ipcMain.handle("coach:file:read", async (_event, fileName) => readCoachFile(fileName));
+ipcMain.handle("coach:file:write", async (_event, fileName, content) => writeCoachFile(fileName, content));
+ipcMain.handle("coach:archive:write", async (_event, archive, reason) => writeCoachArchive(archive, reason));
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  app.setName("Trace");
+  app.setPath("userData", path.join(app.getPath("appData"), "StudyAI Recorder"));
+  createWindow();
+});
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });

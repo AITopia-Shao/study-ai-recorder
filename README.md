@@ -1,44 +1,46 @@
-# StudyAI Recorder
+# Trace
 
-StudyAI Recorder is a cross-platform learning planner and activity journal. It combines lightweight planning, goal tracking, foreground app/window monitoring, optional local screen OCR, and a structured AI learning-management agent that turns each day into a concise review.
+Trace is a local-first planning coach and activity journal for macOS and Windows. It combines short-term plans, long-term goals, foreground app/window monitoring, optional local screen OCR, and a coach agent that can summarize records, update planning data, keep memory, and write scoped coach files.
 
 The app is designed for learners and builders who want a private, local-first record of what they planned, what they actually did, and what to improve tomorrow.
 
 ## Highlights
 
-- Native SwiftUI macOS app
-- Windows parity build packaged as an Electron desktop app
-- Plan mode for daily tasks
-- Goal mode for longer learning outcomes
+- Native SwiftUI macOS app and Electron Windows parity app
+- Unified Planning workspace for daily plans and long-term goals
+- Today workspace for plan completion, daily diary, goal milestones, and stage logs
 - Foreground app and window-title sampling
 - Optional screen snapshots with on-device OCR
 - Local secure API key handling: macOS Keychain and Windows safeStorage encryption
 - OpenAI-compatible chat completions endpoint support
-- Stable AI review pipeline with deterministic local scoring
-- Day theme inspired by a tree-lined boulevard
-- Night theme inspired by a quiet starlit workspace
+- Coach agent with conversations, rename/delete, identity-aware memory, archive history, structured planning actions, and scoped file operations
+- Stable review pipeline with deterministic local scoring
+- Day, night, and custom 18-bit global theme colors
+- Markdown and LaTeX rendering in coach messages
 
-## AI Agent System
+## Coach Agent
 
-StudyAI Recorder does not ask the model to improvise a free-form diary. It runs a small learning-management agent pipeline:
+Trace does not treat AI as a standalone summary button. The Coach uses a local agent boundary inspired by `claw-code`: conversation state, structured tool actions, scoped file operations, permission boundaries, memory updates, and context compaction.
 
-1. Build an evidence context from tasks, goals, app usage, window timeline, and OCR snippets.
-2. Compute a local 1-10 score with a deterministic rubric.
-3. Lock the score before sending context to the model.
-4. Enable learning skills such as evidence audit, goal alignment, focus recovery, and tomorrow planning.
-5. Require strict JSON from the model.
-6. Render the report in a stable format inside the app.
+The coach can:
 
-This keeps scores more consistent and prevents long, drifting, or overly chatty summaries.
+- Read plans, goals, logs, summaries, activity samples, app usage, window timeline, and OCR snippets.
+- Add, update, delete, and complete plans through structured actions.
+- Add, update, delete, and progress long-term goals.
+- Append plan diaries and goal stage logs.
+- Keep durable coach memory in the local database.
+- Use identity information such as "first-year computer science student" as long-term coaching background.
+- Archive conversations by identity when identity changes and during daily rollover.
+- Read and write files inside the local `CoachFiles/` area.
+- Produce stable daily reviews with the same deterministic local scoring rubric.
 
 ## Screens
 
-- Today: daily overview, quick capture, active mode, metrics, app usage, and timeline
-- Plan: daily executable tasks
-- Goals: longer outcomes with milestones and progress
-- Monitor: current foreground app/window and recent timeline
-- AI Summary: structured daily review
-- Settings: API, theme, sampling, OCR, and agent skill settings
+- Today: today's plans and goals, completion marking, plan diary, and goal stage logs
+- Planning: plan creation with start and completion dates, automatic completion-date grouping, goal creation, metrics, and read-only stage-log browsing
+- Monitor: recording duration, current foreground app/window, app usage, and window timeline
+- Coach: interactive conversation, planning actions, memory, Markdown/LaTeX rendering, and daily review
+- Settings: identity, archived conversations, API, global theme, sampling, OCR, and agent skill settings
 
 ## Requirements
 
@@ -47,7 +49,7 @@ This keeps scores more consistent and prevents long, drifting, or overly chatty 
 - Apple Command Line Tools or Xcode for macOS builds
 - Swift Package Manager for macOS builds
 - Node.js/npm for Windows builds
-- An OpenAI-compatible chat completions API if you want AI summaries
+- An OpenAI-compatible chat completions API if you want coach responses and summaries
 
 ## Run Locally
 
@@ -64,7 +66,7 @@ On a normal developer machine outside Codex sandboxing, `swift run` is usually e
 ```bash
 chmod +x scripts/build_app.sh
 scripts/build_app.sh
-open "dist/StudyAI Recorder.app"
+open "dist/Trace.app"
 ```
 
 The generated app bundle is ignored by git and lives under `dist/`.
@@ -78,15 +80,27 @@ scripts/package_release.sh 0.1.0
 
 This creates a macOS package:
 
-- `dist/release/StudyAI-Recorder-v0.1.0-macOS-arm64.zip`
-- `dist/release/StudyAI-Recorder-v0.1.0-macOS-arm64.zip.sha256`
+- `dist/release/Trace-v0.1.0-macOS-arm64.zip`
+- `dist/release/Trace-v0.1.0-macOS-arm64.zip.sha256`
 
 Current public downloads are published from GitHub Releases. Tagged releases also build a Windows installer:
 
-- `StudyAI-Recorder-v0.1.0-Windows-x64-Setup.exe`
-- `StudyAI-Recorder-v0.1.0-Windows-x64-Setup.exe.sha256`
+- `Trace-v0.1.0-Windows-x64-Setup.exe`
+- `Trace-v0.1.0-Windows-x64-Setup.exe.sha256`
 
-The Windows app is an Electron parity build with the same product surface as the macOS app: plan mode, goal mode, foreground process/window monitoring, optional screenshots with best-effort local OCR, themes, stable scoring, and OpenAI-compatible AI summaries.
+To package the Windows app locally from this repository:
+
+```bash
+chmod +x scripts/package_windows.sh
+scripts/package_windows.sh 0.1.0
+```
+
+This creates:
+
+- `dist/release/Trace-v0.1.0-Windows-x64-Setup.exe`
+- `dist/release/Trace-v0.1.0-Windows-x64-Setup.exe.sha256`
+
+The Windows app is maintained as a strict Electron parity build for the macOS product surface.
 
 ## AI Setup
 
@@ -96,23 +110,25 @@ Open Settings in the app and configure:
 - Model, for example `gpt-4o-mini`
 - API Key
 
+Recording start/pause lives at the bottom of the sidebar. The Coach is always available; without an API key it falls back to local guidance.
+
 API keys are saved locally and are not written to the repository.
 
 ## Privacy
 
-StudyAI Recorder is local-first:
+Trace is local-first:
 
 - Tasks, goals, activity samples, and summaries are stored locally.
 - API keys are stored locally: macOS Keychain on macOS; Electron safeStorage-encrypted values in Windows app data on Windows.
 - Screen snapshots and OCR are disabled by default.
 - OCR is performed locally before any text is sent to the AI endpoint: Apple's Vision framework on macOS, Windows OCR APIs on Windows.
-- When AI summary generation is used, selected task, goal, timeline, app usage, and OCR text context is sent to the configured API provider.
+- When the Coach is used, selected plans, goals, logs, summaries, timeline, app usage, and OCR text context is sent to the configured API provider.
 
 See [docs/PRIVACY.md](docs/PRIVACY.md) for details.
 
 ## Data Locations
 
-Local database:
+Local database. Existing installs keep the legacy directory name so data and API keys are not lost, even though the public product name is `Trace`:
 
 ```text
 ~/Library/Application Support/StudyAIRecorder/database.json
@@ -135,12 +151,13 @@ Sources/StudyAIRecorder/
   AppEntry.swift          SwiftUI app entry point
   AppState.swift          app state and persistence coordination
   KeychainStore.swift     API key storage
-  LearningAgent.swift     agent context, skills, rubric, report rendering
+  LearningAgent.swift     review context, skills, rubric, report rendering
   Models.swift            Codable domain models and settings
+  PlanningCoachAgent.swift conversation protocol, planning tools, memory, scoped file actions
   Storage.swift           local JSON database
   Views.swift             SwiftUI screens and theme system
 windows/
-  main.js                 Electron main process, storage, monitoring, screenshots, OCR, AI summaries
+  main.js                 Electron main process, storage, monitoring, screenshots, OCR, planning coach
   preload.js              Safe renderer bridge
   src/                    Windows parity UI
 ```

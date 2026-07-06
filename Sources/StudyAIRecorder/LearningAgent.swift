@@ -50,14 +50,17 @@ struct LearningDayContext: Hashable {
     var tasksText: String {
         if tasks.isEmpty { return "无今日任务" }
         return tasks.map {
-            "- [\($0.status.title)] \($0.title) | 项目：\($0.project) | 预计：\($0.estimatedMinutes) 分钟 | 优先级：\($0.priority.title) | 备注：\($0.note)"
+            let journal = $0.journal.suffix(3).map { "\($0.createdAt.clockText)：\($0.title) - \($0.body)" }.joined(separator: "；")
+            return "- [\($0.status.title)] \($0.title) | 开始：\($0.startDate.dayText) | 完成：\($0.targetDate.dayText) | 项目：\($0.project) | 预计：\($0.estimatedMinutes) 分钟 | 优先级：\($0.priority.title) | 备注：\($0.note) | 完成记录：\($0.completionNote) | 日记：\(journal)"
         }.joined(separator: "\n")
     }
 
     var goalsText: String {
         if goals.isEmpty { return "无长期目标" }
         return goals.map {
-            "- \($0.title) | 进度：\(Int($0.progress * 100))% | 衡量：\($0.metric) | 截止：\($0.targetDate.dayText)"
+            let logs = $0.logs.suffix(5).map { "\($0.createdAt.dayText)：\($0.title) - \($0.body)" }.joined(separator: "；")
+            let milestones = $0.milestones.map { "\($0.isDone ? "已完成" : "未完成")-\($0.title)" }.joined(separator: "；")
+            return "- \($0.title) | 进度：\(Int($0.progress * 100))% | 衡量：\($0.metric) | 截止：\($0.targetDate.dayText) | 里程碑：\(milestones) | 阶段日志：\(logs)"
         }.joined(separator: "\n")
     }
 }
@@ -129,9 +132,9 @@ enum LearningScoreRubric {
             components.append("记录时长偏短。")
         }
 
-        if !context.goals.isEmpty && context.tasks.contains(where: { $0.mode == .goal || $0.priority == .high }) {
+        if !context.goals.isEmpty && context.tasks.contains(where: { $0.priority == .high || !$0.journal.isEmpty || !$0.completionNote.isEmpty }) {
             score += 1
-            components.append("存在目标相关行动。")
+            components.append("存在支撑长期目标的高优先级行动或日志。")
         } else if !context.goals.isEmpty {
             components.append("有长期目标，但今日动作关联不强。")
         }
@@ -208,7 +211,7 @@ struct StudyAgentReport: Codable, Hashable {
             tomorrowPlan: [
                 "选一个最高优先级任务先做 45 分钟。",
                 "完成后记录成果文件、页码或实验结果。",
-                "晚上用 AI 总结检查计划偏差。"
+                "晚上用教练检查计划偏差。"
             ],
             dataWarnings: warnings
         )
@@ -284,7 +287,7 @@ enum StudyAgentPromptBuilder {
             .joined(separator: "\n")
 
         return """
-        你是 StudyAI Learning Agent 的总结子代理。你的任务是把学习轨迹整理成稳定、简洁、可执行的日报 JSON。
+        你是 Trace 教练的总结子代理。你的任务是把学习轨迹、计划日记和目标阶段日志整理成稳定、简洁、可执行的日报 JSON。
 
         运行规则：
         - 只返回 JSON，不要 Markdown，不要问候语，不要解释 schema。

@@ -3,10 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:-0.1.0}"
-APP_NAME="StudyAI Recorder"
+APP_NAME="Trace"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 PACKAGE_DIR="$ROOT_DIR/dist/release"
-ZIP_NAME="StudyAI-Recorder-v$VERSION-macOS-arm64.zip"
+ZIP_NAME="Trace-v$VERSION-macOS-arm64.zip"
 ZIP_PATH="$PACKAGE_DIR/$ZIP_NAME"
 CHECKSUM_PATH="$ZIP_PATH.sha256"
 

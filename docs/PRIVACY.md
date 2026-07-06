@@ -1,13 +1,14 @@
 # Privacy
 
-StudyAI Recorder is designed to keep user data local unless the user explicitly requests an AI summary.
+Trace is designed to keep user data local unless the user explicitly uses the Coach.
 
 ## Stored Locally
 
 - Plans
 - Goals
 - Activity samples
-- AI summaries
+- Coach summaries
+- Coach identity, active conversations, and archived conversations
 - Optional snapshot paths
 - Optional OCR text snippets
 
@@ -26,7 +27,7 @@ Screen snapshots are disabled by default. When enabled:
 - OCR is performed locally before summary context is prepared.
 - macOS uses Apple's Vision framework.
 - Windows uses local Windows OCR APIs on captured screenshots when available.
-- OCR text may be included in AI summary context.
+- OCR text may be included in Coach context.
 
 ## Sent to AI Provider
 
@@ -37,5 +38,8 @@ When the user generates a summary, the configured API provider may receive:
 - App usage distribution
 - Window timeline blocks
 - Selected OCR text snippets
+- Coach identity, current conversation context, durable memory, and recent archived summaries when needed for planning continuity
 
 Do not enable screenshots/OCR if your screen may contain sensitive material that should not be summarized.
+
+Deleting a conversation does not delete durable Coach memory. Changing identity archives the current identity's conversations and memory, then starts a new identity profile.
