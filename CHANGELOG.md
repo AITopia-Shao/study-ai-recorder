@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.10
+
+- Replaced macOS and Windows app icons with the provided cropped Trace icon.
+- Added macOS bundle icon metadata and packaged Windows installer icon alignment.
+
 ## 0.3.9
 
 - Renamed the public product to Trace across macOS and Windows.

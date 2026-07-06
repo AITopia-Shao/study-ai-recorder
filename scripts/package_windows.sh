@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-0.3.9}"
+VERSION="${1:-0.3.10}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WINDOWS_DIR="$ROOT_DIR/windows"
 RELEASE_DIR="$ROOT_DIR/dist/release"

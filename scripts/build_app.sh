@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:-0.1.0}"
 APP_NAME="Trace"
 BINARY_NAME="StudyAIRecorder"
+ICON_NAME="TraceIcon"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
@@ -18,6 +19,7 @@ swift build -c release --disable-sandbox --cache-path "$ROOT_DIR/.build/swiftpm-
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 cp ".build/release/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
+cp "$ROOT_DIR/Assets/$ICON_NAME.icns" "$RESOURCES_DIR/$ICON_NAME.icns"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -32,6 +34,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <string>local.trace</string>
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
+  <key>CFBundleIconFile</key>
+  <string>$ICON_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
