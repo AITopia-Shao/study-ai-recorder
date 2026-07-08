@@ -697,8 +697,14 @@ final class AppState: ObservableObject {
         if message.role == .user,
            database.coachConversations[index].title.hasPrefix("对话 ")
             || database.coachConversations[index].title.hasPrefix("Conversation ")
+            || database.coachConversations[index].title.hasPrefix("今日对话 ")
+            || database.coachConversations[index].title.hasPrefix("Today Chat ")
             || database.coachConversations[index].title == "新对话"
-            || database.coachConversations[index].title == "New Chat" {
+            || database.coachConversations[index].title == "New Chat"
+            || database.coachConversations[index].title == "默认对话"
+            || database.coachConversations[index].title == "Default Chat"
+            || database.coachConversations[index].title == "旧对话"
+            || database.coachConversations[index].title == "Old Chat" {
             database.coachConversations[index].title = String(message.content.prefix(18))
         }
         database.coachMessages = database.coachConversations[index].messages

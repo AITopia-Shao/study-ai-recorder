@@ -400,7 +400,7 @@ struct SidebarConversationRow: View {
                     .focused($titleFieldFocused)
                     .onSubmit(commitRename)
             } else {
-                Text(conversation.title)
+                Text(conversation.localizedTitle)
                     .font(.caption.weight(isActive ? .semibold : .regular))
                     .lineLimit(1)
             }
@@ -1345,7 +1345,7 @@ struct CoachChatCard: View {
         SurfaceCard {
             VStack(spacing: 14) {
                 HStack {
-                    Text(state.activeCoachConversation?.title ?? L("当前对话"))
+                    Text(state.activeCoachConversation?.localizedTitle ?? L("当前对话"))
                         .font(.headline)
                     Spacer()
                     Text(state.coachIdentityTitle)
@@ -2417,9 +2417,12 @@ struct InfoRow: View {
         HStack(alignment: .top) {
             Text(label)
                 .foregroundStyle(.secondary)
-                .frame(width: 48, alignment: .leading)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(width: 88, alignment: .leading)
             Text(value)
                 .textSelection(.enabled)
+                .lineLimit(2)
             Spacer()
         }
     }

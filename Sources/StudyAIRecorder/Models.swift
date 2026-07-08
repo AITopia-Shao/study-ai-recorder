@@ -433,6 +433,29 @@ struct CoachConversation: Identifiable, Codable, Hashable {
     }
 }
 
+extension CoachConversation {
+    var localizedTitle: String {
+        switch title {
+        case "新对话", "New Chat":
+            return L("新对话")
+        case "默认对话", "Default Chat":
+            return L("默认对话")
+        case "旧对话", "Old Chat":
+            return L("旧对话")
+        case "新身份对话", "New Identity Chat":
+            return L("新身份对话")
+        default:
+            if title.hasPrefix("对话 ") {
+                return "\(L("对话")) \(title.dropFirst(3))"
+            }
+            if title.hasPrefix("今日对话 ") {
+                return "\(L("今日对话")) \(title.dropFirst(5))"
+            }
+            return title
+        }
+    }
+}
+
 struct CoachConversationArchive: Identifiable, Codable, Hashable {
     var id = UUID()
     var identityId: UUID

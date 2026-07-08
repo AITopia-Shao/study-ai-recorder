@@ -125,6 +125,7 @@ const I18N = {
     "默认对话": "Default Chat",
     "新身份对话": "New Identity Chat"
     ,"学习": "Study",
+    "今日对话": "Today Chat",
     "分": "min",
     "分钟": "min",
     "计划": "Plan",
@@ -510,6 +511,17 @@ function startNewConversation(title = `${t("对话")} ${dateTimeText(new Date())
   syncLegacyMessages();
 }
 
+function conversationDisplayTitle(conversation) {
+  const title = String(conversation?.title || "").trim();
+  if (title === "新对话" || title === "New Chat") return t("新对话");
+  if (title === "默认对话" || title === "Default Chat") return t("默认对话");
+  if (title === "旧对话" || title === "Old Chat") return t("旧对话");
+  if (title === "新身份对话" || title === "New Identity Chat") return t("新身份对话");
+  if (title.startsWith("对话 ")) return `${t("对话")} ${title.slice(3)}`;
+  if (title.startsWith("今日对话 ")) return `${t("今日对话")} ${title.slice(5)}`;
+  return title || t("新对话");
+}
+
 async function deleteConversation(id) {
   const conversation = db.coachConversations.find((item) => item.id === id);
   if (!conversation) return;
@@ -680,7 +692,7 @@ function renderSidebar() {
       requestAnimationFrame(() => input.focus());
     } else {
       row.innerHTML = `
-        <button class="conversation-title">${escapeHTML(conversation.title)}</button>
+        <button class="conversation-title">${escapeHTML(conversationDisplayTitle(conversation))}</button>
         <button class="icon-btn rename" title="${t("重命名")}">✎</button>
         <button class="icon-btn delete" title="${t("删除")}">⌫</button>
       `;
@@ -926,9 +938,9 @@ function renderLogTitleList(container, goal, logs) {
 
 function renderMonitor() {
   byId("monitorOverview").innerHTML = `
-    <div>${t("时长")}: ${totalMinutes()} ${t("分钟")}</div>
-    <div>${t("样本")}: ${todaysSamples().length}</div>
-    <div>${t("状态")}: ${timer ? t("正在记录") : t("暂停")}</div>
+    <div><span>${t("时长")}</span><strong>${totalMinutes()} ${t("分钟")}</strong></div>
+    <div><span>${t("样本")}</span><strong>${todaysSamples().length}</strong></div>
+    <div><span>${t("状态")}</span><strong>${timer ? t("正在记录") : t("暂停")}</strong></div>
   `;
   renderUsage();
   renderTimeline();
@@ -967,7 +979,7 @@ function renderTimeline() {
 }
 
 function renderCoach() {
-  byId("coachSubtitle").textContent = `${activeConversation()?.title || t("新对话")} · ${identityTitle()}`;
+  byId("coachSubtitle").textContent = `${conversationDisplayTitle(activeConversation())} · ${identityTitle()}`;
   const messages = byId("coachMessages");
   messages.innerHTML = "";
   for (const message of activeMessages()) {
