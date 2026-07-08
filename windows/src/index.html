@@ -18,7 +18,7 @@
       </button>
 
       <nav class="nav-stack" aria-label="主导航">
-        <small class="nav-label">工作台</small>
+        <small class="nav-label" data-i18n="工作台">工作台</small>
         <button class="nav active" data-view="today">今日</button>
         <button class="nav" data-view="planning">规划</button>
         <button class="nav" data-view="monitor">监控</button>
@@ -55,11 +55,11 @@
         </header>
         <div class="two-col responsive">
           <article class="card">
-            <h2>今日计划</h2>
+            <h2 data-i18n="今日计划">今日计划</h2>
             <div id="todayPlans" class="list"></div>
           </article>
           <article class="card">
-            <h2>目标推进</h2>
+            <h2 data-i18n="目标推进">目标推进</h2>
             <div id="todayGoals" class="list"></div>
           </article>
         </div>
@@ -75,37 +75,37 @@
 
         <div class="form-grid">
           <article class="card form-card">
-            <h2>新计划</h2>
+            <h2 data-i18n="新计划">新计划</h2>
             <input id="taskTitle" placeholder="计划名称" />
             <textarea id="taskNote" placeholder="完成信号或备注"></textarea>
             <input id="taskProject" placeholder="项目" value="学习" />
             <div class="row">
-              <label>开始日期<input id="taskStartDate" type="date" /></label>
-              <label>完成日期<input id="taskDate" type="date" /></label>
+              <label><span data-i18n="开始日期">开始日期</span><input id="taskStartDate" type="date" /></label>
+              <label><span data-i18n="完成日期">完成日期</span><input id="taskDate" type="date" /></label>
             </div>
             <div class="row">
-              <label>预计分钟<input id="taskMinutes" type="number" min="5" step="5" value="45" /></label>
-              <label>优先级<select id="taskPriority"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option></select></label>
+              <label><span data-i18n="预计分钟">预计分钟</span><input id="taskMinutes" type="number" min="5" step="5" value="45" /></label>
+              <label><span data-i18n="优先级">优先级</span><select id="taskPriority"><option value="low" data-i18n="低">低</option><option value="medium" selected data-i18n="中">中</option><option value="high" data-i18n="高">高</option></select></label>
             </div>
-            <button id="addTask">添加计划</button>
+            <button id="addTask" data-i18n="添加计划">添加计划</button>
           </article>
 
           <article class="card form-card">
-            <h2>新目标</h2>
+            <h2 data-i18n="新目标">新目标</h2>
             <input id="goalTitle" placeholder="目标名称" />
             <textarea id="goalPurpose" placeholder="为什么做"></textarea>
             <input id="goalMetric" placeholder="衡量方式" />
-            <label>周期天数<input id="goalDays" type="number" min="1" value="30" /></label>
-            <button id="addGoal">添加目标</button>
+            <label><span data-i18n="周期天数">周期天数</span><input id="goalDays" type="number" min="1" value="30" /></label>
+            <button id="addGoal" data-i18n="添加目标">添加目标</button>
           </article>
         </div>
 
-        <h2 class="section-title">计划日历</h2>
+        <h2 class="section-title" data-i18n="计划日历">计划日历</h2>
         <article class="card">
           <div id="planCalendar" class="list"></div>
         </article>
 
-        <h2 class="section-title">目标日志</h2>
+        <h2 class="section-title" data-i18n="目标日志">目标日志</h2>
         <article class="card">
           <div id="goalBoard" class="goal-log-list"></div>
         </article>
@@ -121,19 +121,19 @@
         </header>
         <div class="grid responsive">
           <article class="card">
-            <h2>今日记录</h2>
+            <h2 data-i18n="今日记录">今日记录</h2>
             <div id="monitorOverview" class="facts"></div>
           </article>
           <article class="card">
-            <h2>当前采样</h2>
+            <h2 data-i18n="当前采样">当前采样</h2>
             <pre id="latestSample">暂无采样</pre>
           </article>
           <article class="card">
-            <h2>应用时间</h2>
+            <h2 data-i18n="应用时间">应用时间</h2>
             <div id="appUsage" class="list"></div>
           </article>
           <article class="card">
-            <h2>窗口轨迹</h2>
+            <h2 data-i18n="窗口轨迹">窗口轨迹</h2>
             <div id="timeline" class="list"></div>
           </article>
         </div>
@@ -151,16 +151,16 @@
             <div id="coachMessages" class="messages"></div>
             <div class="composer">
               <textarea id="coachInput" placeholder="和教练对话"></textarea>
-              <button id="sendCoach">发送</button>
+              <button id="sendCoach" data-i18n="发送">发送</button>
             </div>
           </article>
           <aside class="coach-side">
             <article class="card">
-              <h2>今日复盘</h2>
+              <h2 data-i18n="今日复盘">今日复盘</h2>
               <div id="summaryBody" class="markdown compact">暂无复盘</div>
             </article>
             <article class="card">
-              <h2>记忆</h2>
+              <h2 data-i18n="记忆">记忆</h2>
               <div id="coachMemory"></div>
             </article>
           </aside>
@@ -176,26 +176,35 @@
         </header>
 
         <article class="card form-card">
-          <h2>身份信息</h2>
+          <h2 data-i18n="身份信息">身份信息</h2>
           <input id="identityTitle" placeholder="例如：大一计算机科学学生、高中数学偏科生" />
-          <p class="hint">教练会把身份信息作为长期背景。修改已有身份会归档当前身份下的记忆与全部对话，再开启新的身份记忆。</p>
+          <p class="hint" data-i18n="教练会把身份信息作为长期背景。修改已有身份会归档当前身份下的记忆与全部对话，再开启新的身份记忆。">教练会把身份信息作为长期背景。修改已有身份会归档当前身份下的记忆与全部对话，再开启新的身份记忆。</p>
           <div class="inline-actions">
-            <button id="saveIdentity">保存身份</button>
+            <button id="saveIdentity" data-i18n="保存身份">保存身份</button>
             <span id="identityState">当前：未设置身份</span>
           </div>
         </article>
 
         <article class="card">
-          <h2>已归档对话</h2>
+          <h2 data-i18n="已归档对话">已归档对话</h2>
           <div id="archives" class="archive-list"></div>
         </article>
 
         <article class="card form-card">
-          <h2>外观</h2>
+          <h2 data-i18n="外观">外观</h2>
+          <label><span data-i18n="语言">语言</span><select id="languageSelect">
+            <option value="en">English</option>
+            <option value="zh-Hans">简体中文</option>
+            <option value="zh-Hant">繁體中文</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+          </select></label>
           <div class="theme-tabs">
-            <button class="theme-tab" data-theme="day">日间</button>
-            <button class="theme-tab" data-theme="night">暗夜</button>
-            <button class="theme-tab" data-theme="custom">自定义</button>
+            <button class="theme-tab" data-theme="day" data-i18n="日间">日间</button>
+            <button class="theme-tab" data-theme="night" data-i18n="暗夜">暗夜</button>
+            <button class="theme-tab" data-theme="custom" data-i18n="自定义">自定义</button>
           </div>
           <div id="customColorPanel" class="color-panel">
             <div class="color-row"><span>R</span><input id="colorRed" type="range" min="0" max="63" step="1" /><output id="colorRedValue"></output></div>
@@ -205,20 +214,20 @@
         </article>
 
         <article class="card form-card">
-          <h2>AI 接口</h2>
+          <h2 data-i18n="AI 接口">AI 接口</h2>
           <label>API URL<input id="baseURL" /></label>
-          <label>模型<input id="model" /></label>
+          <label><span data-i18n="模型">模型</span><input id="model" /></label>
           <label>API Key<input id="apiKey" type="password" placeholder="使用 Electron safeStorage 加密保存" /></label>
-          <button id="saveSettings">保存接口设置</button>
+          <button id="saveSettings" data-i18n="保存接口设置">保存接口设置</button>
           <p id="settingsStatus"></p>
         </article>
 
         <article class="card form-card">
-          <h2>采样</h2>
-          <label>采样间隔<select id="sampleInterval"><option value="15">15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option><option value="120">120 秒</option></select></label>
-          <label class="check"><input id="includeWindowTitles" type="checkbox" /> 记录窗口标题</label>
-          <label class="check"><input id="captureScreenshots" type="checkbox" /> 保存屏幕快照并尝试本地 OCR</label>
-          <label>快照间隔（分钟）<input id="screenshotInterval" type="number" min="5" step="5" value="15" /></label>
+          <h2 data-i18n="采样">采样</h2>
+          <label><span data-i18n="采样间隔">采样间隔</span><select id="sampleInterval"><option value="15">15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option><option value="120">120 秒</option></select></label>
+          <label class="check"><input id="includeWindowTitles" type="checkbox" /> <span data-i18n="记录窗口标题">记录窗口标题</span></label>
+          <label class="check"><input id="captureScreenshots" type="checkbox" /> <span data-i18n="保存屏幕快照并尝试本地 OCR">保存屏幕快照并尝试本地 OCR</span></label>
+          <label><span data-i18n="快照间隔（分钟）">快照间隔（分钟）</span><input id="screenshotInterval" type="number" min="5" step="5" value="15" /></label>
         </article>
       </section>
     </main>

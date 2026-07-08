@@ -8,15 +8,15 @@ enum WorkspaceMode: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .plan: return "计划"
-        case .goal: return "目标"
+        case .plan: return L("计划")
+        case .goal: return L("目标")
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .plan: return "计划"
-        case .goal: return "目标"
+        case .plan: return L("计划")
+        case .goal: return L("目标")
         }
     }
 
@@ -37,9 +37,9 @@ enum TaskStatus: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .planned: return "待开始"
-        case .doing: return "进行中"
-        case .done: return "已完成"
+        case .planned: return L("待开始")
+        case .doing: return L("进行中")
+        case .done: return L("已完成")
         }
     }
 }
@@ -53,9 +53,9 @@ enum TaskPriority: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .low: return "低"
-        case .medium: return "中"
-        case .high: return "高"
+        case .low: return L("低")
+        case .medium: return L("中")
+        case .high: return L("高")
         }
     }
 }
@@ -69,17 +69,17 @@ enum AppVisualTheme: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .day: return "日间"
-        case .night: return "暗夜"
-        case .custom: return "自定义"
+        case .day: return L("日间")
+        case .night: return L("暗夜")
+        case .custom: return L("自定义")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .day: return "明亮、清爽、低对比"
-        case .night: return "深色、沉静、护眼"
-        case .custom: return "18bit 色深，自由调侧边栏玻璃色"
+        case .day: return L("明亮、清爽、低对比")
+        case .night: return L("深色、沉静、护眼")
+        case .custom: return L("18bit 色深，自由调侧边栏玻璃色")
         }
     }
 
@@ -109,6 +109,58 @@ enum AppVisualTheme: String, Codable, CaseIterable, Identifiable, Hashable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
+    }
+}
+
+enum AppLanguage: String, Codable, CaseIterable, Identifiable, Hashable {
+    case english = "en"
+    case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
+    case japanese = "ja"
+    case korean = "ko"
+    case french = "fr"
+    case spanish = "es"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .english: return "English"
+        case .simplifiedChinese: return "简体中文"
+        case .traditionalChinese: return "繁體中文"
+        case .japanese: return "日本語"
+        case .korean: return "한국어"
+        case .french: return "Français"
+        case .spanish: return "Español"
+        }
+    }
+
+    var localeIdentifier: String {
+        switch self {
+        case .english: return "en_US"
+        case .simplifiedChinese: return "zh_Hans_CN"
+        case .traditionalChinese: return "zh_Hant_TW"
+        case .japanese: return "ja_JP"
+        case .korean: return "ko_KR"
+        case .french: return "fr_FR"
+        case .spanish: return "es_ES"
+        }
+    }
+
+    var promptName: String {
+        switch self {
+        case .english: return "English"
+        case .simplifiedChinese: return "Simplified Chinese"
+        case .traditionalChinese: return "Traditional Chinese"
+        case .japanese: return "Japanese"
+        case .korean: return "Korean"
+        case .french: return "French"
+        case .spanish: return "Spanish"
+        }
+    }
+
+    var promptInstruction: String {
+        "Reply to the user in \(promptName). Keep tool action JSON keys unchanged."
     }
 }
 
@@ -216,7 +268,7 @@ struct PlanningLogEntry: Identifiable, Codable, Hashable {
 
     private static func defaultTitle(from body: String) -> String {
         let clean = body.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return "未命名记录" }
+        guard !clean.isEmpty else { return L("未命名记录") }
         return String(clean.prefix(18))
     }
 }
@@ -231,10 +283,10 @@ enum CoachMessageRole: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .user: return "我"
-        case .assistant: return "教练"
-        case .tool: return "工具"
-        case .system: return "系统"
+        case .user: return L("我")
+        case .assistant: return L("教练")
+        case .tool: return L("工具")
+        case .system: return L("系统")
         }
     }
 }
@@ -348,7 +400,7 @@ struct CoachConversation: Identifiable, Codable, Hashable {
     init(
         id: UUID = UUID(),
         identityId: UUID,
-        title: String = "新对话",
+        title: String = L("新对话"),
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         messages: [CoachMessage] = []
@@ -374,7 +426,7 @@ struct CoachConversation: Identifiable, Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         identityId = try container.decodeIfPresent(UUID.self, forKey: .identityId) ?? UUID()
-        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "新对话"
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? L("新对话")
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         messages = try container.decodeIfPresent([CoachMessage].self, forKey: .messages) ?? []
@@ -434,8 +486,8 @@ struct CoachConversationArchive: Identifiable, Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         identityId = try container.decodeIfPresent(UUID.self, forKey: .identityId) ?? UUID()
-        identityTitle = try container.decodeIfPresent(String.self, forKey: .identityTitle) ?? "未设置身份"
-        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "归档对话"
+        identityTitle = try container.decodeIfPresent(String.self, forKey: .identityTitle) ?? L("未设置身份")
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? L("归档对话")
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         archivedAt = try container.decodeIfPresent(Date.self, forKey: .archivedAt) ?? Date()
         messages = try container.decodeIfPresent([CoachMessage].self, forKey: .messages) ?? []
@@ -528,7 +580,7 @@ struct StudyTask: Identifiable, Codable, Hashable {
         title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
         note = try container.decodeIfPresent(String.self, forKey: .note) ?? ""
         mode = try container.decodeIfPresent(WorkspaceMode.self, forKey: .mode) ?? .plan
-        project = try container.decodeIfPresent(String.self, forKey: .project) ?? "学习"
+        project = try container.decodeIfPresent(String.self, forKey: .project) ?? L("学习")
         targetDate = try container.decodeIfPresent(Date.self, forKey: .targetDate) ?? Date()
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? targetDate
         startDate = try container.decodeIfPresent(Date.self, forKey: .startDate) ?? createdAt
@@ -597,7 +649,7 @@ struct StudyGoal: Identifiable, Codable, Hashable {
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
         purpose = try container.decodeIfPresent(String.self, forKey: .purpose) ?? ""
-        metric = try container.decodeIfPresent(String.self, forKey: .metric) ?? "完成可验证产出"
+        metric = try container.decodeIfPresent(String.self, forKey: .metric) ?? L("完成可验证产出")
         targetDate = try container.decodeIfPresent(Date.self, forKey: .targetDate) ?? Date()
         progress = try container.decodeIfPresent(Double.self, forKey: .progress) ?? 0
         milestones = try container.decodeIfPresent([Milestone].self, forKey: .milestones) ?? []
@@ -632,6 +684,7 @@ struct AppSettings: Codable, Hashable {
 
     var baseURL: String = AppSettings.defaultBaseURL
     var model: String = AppSettings.defaultModel
+    var language: AppLanguage = .english
     var visualTheme: AppVisualTheme = .day
     var sampleInterval: TimeInterval = 30
     var includeWindowTitles: Bool = true
@@ -646,6 +699,7 @@ struct AppSettings: Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case baseURL
         case model
+        case language
         case visualTheme
         case sampleInterval
         case includeWindowTitles
@@ -664,6 +718,7 @@ struct AppSettings: Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         baseURL = try container.decodeIfPresent(String.self, forKey: .baseURL) ?? AppSettings.defaultBaseURL
         model = try container.decodeIfPresent(String.self, forKey: .model) ?? AppSettings.defaultModel
+        language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .english
         visualTheme = try container.decodeIfPresent(AppVisualTheme.self, forKey: .visualTheme) ?? .day
         sampleInterval = try container.decodeIfPresent(TimeInterval.self, forKey: .sampleInterval) ?? 30
         includeWindowTitles = try container.decodeIfPresent(Bool.self, forKey: .includeWindowTitles) ?? true
@@ -771,7 +826,7 @@ struct AppDatabase: Codable, Hashable {
             let updatedAt = migratedMessages.last?.createdAt ?? createdAt
             let conversation = CoachConversation(
                 identityId: coachIdentity.id,
-                title: migratedMessages.isEmpty ? "默认对话" : "旧对话",
+                title: migratedMessages.isEmpty ? L("默认对话") : L("旧对话"),
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 messages: migratedMessages
@@ -873,7 +928,7 @@ extension Date {
     }
 
     var monthText: String {
-        DateFormatters.monthTitle.string(from: self)
+        DateFormatters.localizedMonthTitle.string(from: self)
     }
 }
 
@@ -928,4 +983,11 @@ enum DateFormatters {
         formatter.dateFormat = "yyyy 年 M 月"
         return formatter
     }()
+
+    static var localizedMonthTitle: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = TraceLocalization.locale
+        formatter.setLocalizedDateFormatFromTemplate("yyyy MMMM")
+        return formatter
+    }
 }

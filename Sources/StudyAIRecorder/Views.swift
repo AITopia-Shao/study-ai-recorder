@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var isSidebarHidden = false
 
     var body: some View {
+        let _ = (TraceLocalization.current = state.database.settings.language)
         let _ = AppColors.configure(state.database.settings)
         HStack(spacing: 0) {
             if !isSidebarHidden {
@@ -121,7 +122,7 @@ struct TitlebarSidebarToggle: NSViewRepresentable {
             let symbolName = isSidebarHidden.wrappedValue ? "sidebar.leading" : "sidebar.left"
             button?.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
             button?.contentTintColor = .secondaryLabelColor
-            button?.toolTip = isSidebarHidden.wrappedValue ? "展开侧边栏" : "折叠侧边栏"
+            button?.toolTip = isSidebarHidden.wrappedValue ? L("展开侧边栏") : L("折叠侧边栏")
         }
 
         @objc private func toggleSidebar() {
@@ -159,12 +160,12 @@ struct SidebarView: View {
                         .background(AppColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
-                .help("设置")
+                .help(L("设置"))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Trace")
                         .font(.title3.weight(.semibold))
-                    Text("记录与教练")
+                    Text(L("记录与教练"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -177,7 +178,7 @@ struct SidebarView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    SidebarGroup(title: "工作台") {
+                    SidebarGroup(title: L("工作台")) {
                         ForEach([AppSection.today, .planning, .monitor]) { section in
                             SidebarButton(section: section)
                         }
@@ -334,7 +335,7 @@ struct CoachSidebarSection: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .help("教练")
+                .help(L("教练"))
 
                 Button {
                     state.startNewCoachConversation()
@@ -344,7 +345,7 @@ struct CoachSidebarSection: View {
                         .frame(width: 22, height: 28)
                 }
                 .buttonStyle(.borderless)
-                .help("新对话")
+                .help(L("新对话"))
 
                 Button {
                     withAnimation(.snappy(duration: 0.18)) {
@@ -356,7 +357,7 @@ struct CoachSidebarSection: View {
                         .frame(width: 20, height: 28)
                 }
                 .buttonStyle(.borderless)
-                .help(isExpanded ? "收起对话" : "展开对话")
+                .help(isExpanded ? L("收起对话") : L("展开对话"))
             }
 
             if isExpanded {
@@ -393,7 +394,7 @@ struct SidebarConversationRow: View {
                 .font(.caption)
                 .foregroundStyle(isActive ? AppColors.accent : .secondary)
             if isEditing {
-                TextField("对话标题", text: $draftTitle)
+                TextField(L("对话标题"), text: $draftTitle)
                     .textFieldStyle(.plain)
                     .font(.caption)
                     .focused($titleFieldFocused)
@@ -412,7 +413,7 @@ struct SidebarConversationRow: View {
                         .font(.caption2.weight(.semibold))
                 }
                 .buttonStyle(.borderless)
-                .help("确认")
+                .help(L("确认"))
 
                 Button {
                     cancelRename()
@@ -421,7 +422,7 @@ struct SidebarConversationRow: View {
                         .font(.caption2.weight(.semibold))
                 }
                 .buttonStyle(.borderless)
-                .help("取消")
+                .help(L("取消"))
             } else {
                 Button {
                     beginRename()
@@ -430,7 +431,7 @@ struct SidebarConversationRow: View {
                         .font(.caption2)
                 }
                 .buttonStyle(.borderless)
-                .help("重命名")
+                .help(L("重命名"))
 
                 Button {
                     showDeleteConfirmation = true
@@ -440,7 +441,7 @@ struct SidebarConversationRow: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
-                .help("删除对话")
+                .help(L("删除对话"))
             }
         }
         .padding(.horizontal, 8)
@@ -453,13 +454,13 @@ struct SidebarConversationRow: View {
                 state.selectedSection = .coach
             }
         }
-        .confirmationDialog("删除对话？", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-            Button("删除", role: .destructive) {
+        .confirmationDialog(L("删除对话？"), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button(L("删除"), role: .destructive) {
                 state.deleteCoachConversation(conversation)
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("删除后不会影响教练记忆和身份信息。")
+            Text(L("删除后不会影响教练记忆和身份信息。"))
         }
     }
 
@@ -497,9 +498,9 @@ struct MonitorStatusPill: View {
                 .fill(state.monitor.isRunning ? AppColors.good : .secondary)
                 .frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: 2) {
-                Text(state.monitor.isRunning ? "正在记录" : "记录暂停")
+                Text(state.monitor.isRunning ? L("正在记录") : L("记录暂停"))
                     .font(.callout.weight(.semibold))
-                Text(state.monitor.latestSample?.appName ?? "等待采样")
+                Text(state.monitor.latestSample?.appName ?? L("等待采样"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -528,7 +529,7 @@ struct TodayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                HeaderBar(title: "今日", subtitle: Date().dayText, actions: {})
+                HeaderBar(title: L("今日"), subtitle: Date().dayText, actions: {})
 
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 18) {
@@ -555,11 +556,11 @@ struct TodayPlansCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("今日计划")
+                Text(L("今日计划"))
                     .font(.headline)
                 let tasks = state.todaysTasks()
                 if tasks.isEmpty {
-                    EmptyStateText("暂无今日计划")
+                    EmptyStateText(L("暂无今日计划"))
                 } else {
                     ForEach(tasks) { task in
                         TodayPlanRow(task: task)
@@ -607,7 +608,7 @@ struct TodayPlanRow: View {
                     HStack(spacing: 8) {
                         Tag(text: task.project, color: AppColors.accent)
                         Tag(text: "\(task.startDate.monthDayText)-\(task.targetDate.monthDayText)", color: AppColors.accent)
-                        Tag(text: "\(task.estimatedMinutes) 分", color: AppColors.steel)
+                        Tag(text: "\(task.estimatedMinutes) \(L("分"))", color: AppColors.steel)
                         Tag(text: task.priority.title, color: priorityColor)
                         if let completedAt = task.completedAt {
                             Tag(text: completedAt.clockText, color: AppColors.good)
@@ -617,14 +618,14 @@ struct TodayPlanRow: View {
                 Spacer()
             }
 
-            MemoEditor(title: $diaryTitle, text: $diaryBody, titlePlaceholder: "日记标题", bodyPlaceholder: "完成细节与感想")
+            MemoEditor(title: $diaryTitle, text: $diaryBody, titlePlaceholder: L("日记标题"), bodyPlaceholder: L("完成细节与感想"))
 
             HStack(spacing: 10) {
                 Button {
                     state.appendTaskJournal(task, title: diaryTitle, body: diaryBody)
                     clearDraft()
                 } label: {
-                    Label("记录日记", systemImage: "square.and.pencil")
+                    Label(L("记录日记"), systemImage: "square.and.pencil")
                 }
                 .disabled(isDiaryDraftEmpty)
 
@@ -632,7 +633,7 @@ struct TodayPlanRow: View {
                     state.completeTask(task, title: diaryTitle, body: diaryBody)
                     clearDraft()
                 } label: {
-                    Label("记录并完成", systemImage: "checkmark.circle")
+                    Label(L("记录并完成"), systemImage: "checkmark.circle")
                 }
                 .disabled(task.status == .done || isDiaryDraftEmpty)
 
@@ -687,11 +688,11 @@ struct TodayGoalsCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("目标推进")
+                Text(L("目标推进"))
                     .font(.headline)
                 let goals = state.activeGoals()
                 if goals.isEmpty {
-                    EmptyStateText("暂无长期目标")
+                    EmptyStateText(L("暂无长期目标"))
                 } else {
                     ForEach(goals) { goal in
                         TodayGoalRow(goal: goal)
@@ -743,13 +744,13 @@ struct TodayGoalRow: View {
                 }
             }
 
-            MemoEditor(title: $logTitle, text: $logBody, titlePlaceholder: "阶段日志标题", bodyPlaceholder: "阶段完成情况与感想")
+            MemoEditor(title: $logTitle, text: $logBody, titlePlaceholder: L("阶段日志标题"), bodyPlaceholder: L("阶段完成情况与感想"))
             Button {
                 state.appendGoalLog(goal, title: logTitle, body: logBody)
                 logTitle = ""
                 logBody = ""
             } label: {
-                Label("记录阶段日志", systemImage: "text.badge.plus")
+                Label(L("记录阶段日志"), systemImage: "text.badge.plus")
             }
             .disabled(isLogDraftEmpty)
 
@@ -808,7 +809,7 @@ struct PlanningView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                HeaderBar(title: "规划", subtitle: "长期目标与短期计划", actions: {})
+                HeaderBar(title: L("规划"), subtitle: L("长期目标与短期计划"), actions: {})
 
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 18) {
@@ -836,7 +837,7 @@ struct PlanFormCard: View {
     @EnvironmentObject private var state: AppState
     @State private var title = ""
     @State private var note = ""
-    @State private var project = "学习"
+    @State private var project = L("学习")
     @State private var startDate = Date()
     @State private var targetDate = Date()
     @State private var minutes = 45.0
@@ -845,33 +846,33 @@ struct PlanFormCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("新计划")
+                Text(L("新计划"))
                     .font(.headline)
-                TextField("计划名称", text: $title)
+                TextField(L("计划名称"), text: $title)
                     .textFieldStyle(.roundedBorder)
-                TextField("完成信号或备注", text: $note, axis: .vertical)
+                TextField(L("完成信号或备注"), text: $note, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                TextField("项目", text: $project)
+                TextField(L("项目"), text: $project)
                     .textFieldStyle(.roundedBorder)
-                DatePicker("开始日期", selection: $startDate, displayedComponents: .date)
-                DatePicker("完成日期", selection: $targetDate, displayedComponents: .date)
+                DatePicker(L("开始日期"), selection: $startDate, displayedComponents: .date)
+                DatePicker(L("完成日期"), selection: $targetDate, displayedComponents: .date)
                     .onChange(of: startDate) { _, value in
                         if targetDate < value {
                             targetDate = value
                         }
                     }
                 if targetDate < startDate {
-                    Text("完成日期不能早于开始日期")
+                    Text(L("完成日期不能早于开始日期"))
                         .font(.caption)
                         .foregroundStyle(AppColors.warning)
                 }
                 HStack {
-                    Picker("优先级", selection: $priority) {
+                    Picker(L("优先级"), selection: $priority) {
                         ForEach(TaskPriority.allCases) { item in
                             Text(item.title).tag(item)
                         }
                     }
-                    Stepper("\(Int(minutes)) 分", value: $minutes, in: 5...240, step: 5)
+                    Stepper("\(Int(minutes)) \(L("分"))", value: $minutes, in: 5...240, step: 5)
                 }
                 Button {
                     state.addTask(
@@ -885,12 +886,12 @@ struct PlanFormCard: View {
                     )
                     title = ""
                     note = ""
-                    project = "学习"
+                    project = L("学习")
                     startDate = Date()
                     targetDate = Date()
                     minutes = 45
                 } label: {
-                    Label("添加计划", systemImage: "plus")
+                    Label(L("添加计划"), systemImage: "plus")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -911,16 +912,16 @@ struct GoalFormCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("新目标")
+                Text(L("新目标"))
                     .font(.headline)
-                TextField("目标名称", text: $title)
+                TextField(L("目标名称"), text: $title)
                     .textFieldStyle(.roundedBorder)
-                TextField("为什么做", text: $purpose, axis: .vertical)
+                TextField(L("为什么做"), text: $purpose, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                TextField("衡量方式", text: $metric)
+                TextField(L("衡量方式"), text: $metric)
                     .textFieldStyle(.roundedBorder)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("周期 \(Int(days)) 天")
+                    Text("\(L("周期")) \(Int(days)) \(L("天"))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Slider(value: $days, in: 7...180, step: 1)
@@ -932,7 +933,7 @@ struct GoalFormCard: View {
                     metric = ""
                     days = 30
                 } label: {
-                    Label("添加目标", systemImage: "scope")
+                    Label(L("添加目标"), systemImage: "scope")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -949,12 +950,12 @@ struct PlanningPulseCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("规划概览")
+                Text(L("规划概览"))
                     .font(.headline)
-                InfoRow(label: "计划", value: "\(state.database.tasks.count)")
-                InfoRow(label: "今日", value: "\(state.todaysTasks().count)")
-                InfoRow(label: "目标", value: "\(state.database.goals.count)")
-                InfoRow(label: "日志", value: "\(state.database.tasks.reduce(0) { $0 + $1.journal.count } + state.database.goals.reduce(0) { $0 + $1.logs.count })")
+                InfoRow(label: L("计划"), value: "\(state.database.tasks.count)")
+                InfoRow(label: L("今日"), value: "\(state.todaysTasks().count)")
+                InfoRow(label: L("目标"), value: "\(state.database.goals.count)")
+                InfoRow(label: L("日志"), value: "\(state.database.tasks.reduce(0) { $0 + $1.journal.count } + state.database.goals.reduce(0) { $0 + $1.logs.count })")
             }
         }
     }
@@ -965,12 +966,12 @@ struct PlanCalendarCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("计划日历")
+            Text(L("计划日历"))
                 .font(.headline)
             SurfaceCard {
                 VStack(alignment: .leading, spacing: 14) {
                     if groupedTasks.isEmpty {
-                        EmptyStateText("暂无计划")
+                        EmptyStateText(L("暂无计划"))
                     } else {
                         ForEach(sortedKeys, id: \.self) { key in
                             VStack(alignment: .leading, spacing: 10) {
@@ -1023,9 +1024,9 @@ struct PlanCalendarRow: View {
                 }
                 HStack(spacing: 8) {
                     Tag(text: task.project, color: AppColors.accent)
-                    Tag(text: "开始 \(task.startDate.monthDayText)", color: AppColors.accent)
-                    Tag(text: "完成 \(task.targetDate.monthDayText)", color: AppColors.accent)
-                    Tag(text: "\(task.estimatedMinutes) 分", color: AppColors.steel)
+                    Tag(text: "\(L("开始")) \(task.startDate.monthDayText)", color: AppColors.accent)
+                    Tag(text: "\(L("完成")) \(task.targetDate.monthDayText)", color: AppColors.accent)
+                    Tag(text: "\(task.estimatedMinutes) \(L("分"))", color: AppColors.steel)
                     Tag(text: task.status.title, color: task.status == .done ? AppColors.good : AppColors.steel)
                 }
             }
@@ -1047,21 +1048,21 @@ struct GoalBoard: View {
     var body: some View {
         let items = goalLogItems
         VStack(alignment: .leading, spacing: 14) {
-            Text("目标日志")
+            Text(L("目标日志"))
                 .font(.headline)
             if state.database.goals.isEmpty {
                 SurfaceCard {
-                    EmptyStateText("暂无目标")
+                    EmptyStateText(L("暂无目标"))
                 }
             } else {
                 SurfaceCard {
                     NavigationStack {
                         if items.isEmpty {
-                            EmptyStateText("暂无阶段日志")
+                            EmptyStateText(L("暂无阶段日志"))
                         } else if spansMultipleMonths(items) {
                             GoalLogMonthList(groups: monthGroups(from: items))
                         } else {
-                            GoalLogTitleList(title: "阶段日志", items: items)
+                            GoalLogTitleList(title: L("阶段日志"), items: items)
                         }
                     }
                     .frame(minHeight: 280)
@@ -1136,7 +1137,7 @@ struct GoalLogMonthList: View {
             }
         }
         .listStyle(.plain)
-        .navigationTitle("目标日志")
+        .navigationTitle(L("目标日志"))
     }
 }
 
@@ -1186,7 +1187,7 @@ struct GoalLogArticle: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .navigationTitle("全文")
+        .navigationTitle(L("全文"))
     }
 }
 
@@ -1218,7 +1219,7 @@ struct GoalPlanningCard: View {
                 }
 
                 HStack {
-                    Text("截止 \(goal.targetDate.dayText)")
+                Text("\(L("截止")) \(goal.targetDate.dayText)")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -1247,7 +1248,7 @@ struct MonitorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                HeaderBar(title: "监控", subtitle: "记录时长、应用分布与窗口轨迹", actions: {})
+                HeaderBar(title: L("监控"), subtitle: L("记录时长、应用分布与窗口轨迹"), actions: {})
 
                 HStack(alignment: .top, spacing: 18) {
                     VStack(spacing: 18) {
@@ -1273,11 +1274,11 @@ struct MonitorOverviewCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("今日记录")
+                Text(L("今日记录"))
                     .font(.headline)
-                InfoRow(label: "时长", value: "\(ActivityAnalyzer.totalMinutes(from: state.todaysSamples(), sampleInterval: state.database.settings.sampleInterval)) 分钟")
-                InfoRow(label: "样本", value: "\(state.todaysSamples().count)")
-                InfoRow(label: "状态", value: state.monitor.isRunning ? "正在记录" : "暂停")
+                InfoRow(label: L("时长"), value: "\(ActivityAnalyzer.totalMinutes(from: state.todaysSamples(), sampleInterval: state.database.settings.sampleInterval)) \(L("分钟"))")
+                InfoRow(label: L("样本"), value: "\(state.todaysSamples().count)")
+                InfoRow(label: L("状态"), value: state.monitor.isRunning ? L("正在记录") : L("暂停"))
             }
         }
     }
@@ -1289,23 +1290,23 @@ struct CurrentSampleCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 16) {
-                Text("当前采样")
+                Text(L("当前采样"))
                     .font(.headline)
                 if let sample = state.monitor.latestSample {
-                    InfoRow(label: "应用", value: sample.appName)
-                    InfoRow(label: "窗口", value: sample.windowTitle ?? "未获取")
-                    InfoRow(label: "时间", value: sample.timestamp.clockText)
-                    InfoRow(label: "进程", value: "\(sample.processID)")
+                    InfoRow(label: L("应用"), value: sample.appName)
+                    InfoRow(label: L("窗口"), value: sample.windowTitle ?? L("未获取"))
+                    InfoRow(label: L("时间"), value: sample.timestamp.clockText)
+                    InfoRow(label: L("进程"), value: "\(sample.processID)")
                     if let text = sample.screenText, !text.isEmpty {
-                        InfoRow(label: "屏幕", value: text)
+                        InfoRow(label: L("屏幕"), value: text)
                     }
                 } else {
-                    EmptyStateText("暂无采样")
+                    EmptyStateText(L("暂无采样"))
                 }
                 Button {
                     state.monitor.collectNow()
                 } label: {
-                    Label("立即采样", systemImage: "dot.scope")
+                    Label(L("立即采样"), systemImage: "dot.scope")
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -1319,7 +1320,7 @@ struct CoachView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            HeaderBar(title: "教练", subtitle: "对话、记忆与规划动作", actions: {})
+            HeaderBar(title: L("教练"), subtitle: L("对话、记忆与规划动作"), actions: {})
 
             HStack(alignment: .top, spacing: 18) {
                 CoachChatCard(input: $input)
@@ -1344,7 +1345,7 @@ struct CoachChatCard: View {
         SurfaceCard {
             VStack(spacing: 14) {
                 HStack {
-                    Text(state.activeCoachConversation?.title ?? "当前对话")
+                    Text(state.activeCoachConversation?.title ?? L("当前对话"))
                         .font(.headline)
                     Spacer()
                     Text(state.coachIdentityTitle)
@@ -1356,7 +1357,7 @@ struct CoachChatCard: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
                             if state.activeCoachMessages.isEmpty {
-                                EmptyStateText("暂无对话")
+                                EmptyStateText(L("暂无对话"))
                             } else {
                                 ForEach(state.activeCoachMessages) { message in
                                     CoachMessageBubble(message: message)
@@ -1367,7 +1368,7 @@ struct CoachChatCard: View {
                                 HStack(spacing: 8) {
                                     ProgressView()
                                         .controlSize(.small)
-                                    Text("教练正在思考")
+                                    Text(L("教练正在思考"))
                                         .foregroundStyle(.secondary)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1400,7 +1401,7 @@ struct CoachChatCard: View {
                         Image(systemName: "paperplane.fill")
                             .frame(width: 34, height: 34)
                     }
-                    .help("发送")
+                    .help(L("发送"))
                     .buttonStyle(.borderedProminent)
                     .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || state.isCoachThinking)
                 }
@@ -1812,7 +1813,7 @@ struct LatestSummaryCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 12) {
-                Text("今日复盘")
+                Text(L("今日复盘"))
                     .font(.headline)
                 if let summary = state.latestSummary() {
                     HStack {
@@ -1829,7 +1830,7 @@ struct LatestSummaryCard: View {
                         .lineLimit(8)
                         .foregroundStyle(.secondary)
                 } else {
-                    EmptyStateText("暂无复盘")
+                    EmptyStateText(L("暂无复盘"))
                 }
             }
         }
@@ -1842,9 +1843,9 @@ struct CoachMemoryCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 12) {
-                Text("记忆")
+                Text(L("记忆"))
                     .font(.headline)
-                Text(state.database.coachMemory.summary.isEmpty ? "暂无长期记忆" : state.database.coachMemory.summary)
+                Text(state.database.coachMemory.summary.isEmpty ? L("暂无长期记忆") : state.database.coachMemory.summary)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if !state.database.coachMemory.keyFacts.isEmpty {
@@ -1867,19 +1868,20 @@ struct SettingsView: View {
     @State private var showIdentityChangeAlert = false
 
     var body: some View {
+        let _ = (TraceLocalization.current = state.database.settings.language)
         let _ = AppColors.configure(state.database.settings)
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                HeaderBar(title: "设置", subtitle: "身份、接口、外观与采样", actions: {})
+                HeaderBar(title: L("设置"), subtitle: L("身份、接口、外观与采样"), actions: {})
 
                 SurfaceCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("身份信息")
+                        Text(L("身份信息"))
                             .font(.headline)
-                        TextField("例如：大一计算机科学学生、高中数学偏科生", text: $identityDraft)
+                        TextField(L("例如：大一计算机科学学生、高中数学偏科生"), text: $identityDraft)
                             .textFieldStyle(.roundedBorder)
 
-                        Text("教练会把身份信息作为长期背景。修改已有身份会先归档当前身份下的记忆和全部对话，再开启新的身份记忆。")
+                        Text(L("教练会把身份信息作为长期背景。修改已有身份会先归档当前身份下的记忆和全部对话，再开启新的身份记忆。"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -1887,12 +1889,12 @@ struct SettingsView: View {
                             Button {
                                 saveIdentityTapped()
                             } label: {
-                                Label(currentIdentityText.isEmpty ? "保存身份" : "修改身份", systemImage: "person.text.rectangle")
+                                Label(currentIdentityText.isEmpty ? L("保存身份") : L("修改身份"), systemImage: "person.text.rectangle")
                             }
                             .buttonStyle(.borderedProminent)
                             .disabled(identityDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || identityDraft.trimmingCharacters(in: .whitespacesAndNewlines) == currentIdentityText)
 
-                            Text("当前：\(state.coachIdentityTitle)")
+                            Text("\(L("当前："))\(state.coachIdentityTitle)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -1903,9 +1905,9 @@ struct SettingsView: View {
 
                 SurfaceCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("外观")
+                        Text(L("外观"))
                             .font(.headline)
-                        Picker("主题", selection: Binding(
+                        Picker(L("主题"), selection: Binding(
                             get: { state.database.settings.visualTheme },
                             set: { value in state.updateSettings { $0.visualTheme = value } }
                         )) {
@@ -1915,6 +1917,19 @@ struct SettingsView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+
+                        Picker(L("语言"), selection: Binding(
+                            get: { state.database.settings.language },
+                            set: { value in
+                                TraceLocalization.current = value
+                                state.updateSettings { $0.language = value }
+                            }
+                        )) {
+                            ForEach(AppLanguage.allCases) { language in
+                                Text(language.displayName).tag(language)
+                            }
+                        }
+                        .pickerStyle(.menu)
 
                         if state.database.settings.visualTheme == .custom {
                             CustomColorPalette()
@@ -1930,7 +1945,7 @@ struct SettingsView: View {
 
                 SurfaceCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("AI 接口")
+                        Text(L("AI 接口"))
                             .font(.headline)
                         TextField("API URL", text: Binding(
                             get: { state.database.settings.baseURL },
@@ -1938,7 +1953,7 @@ struct SettingsView: View {
                         ))
                         .textFieldStyle(.roundedBorder)
 
-                        TextField("模型", text: Binding(
+                        TextField(L("模型"), text: Binding(
                             get: { state.database.settings.model },
                             set: { value in state.updateSettings { $0.model = value } }
                         ))
@@ -1951,7 +1966,7 @@ struct SettingsView: View {
                             Button {
                                 state.saveAPIKey()
                             } label: {
-                                Label("保存 Key", systemImage: "key")
+                                Label(L("保存 Key"), systemImage: "key")
                             }
                             .buttonStyle(.borderedProminent)
 
@@ -1966,31 +1981,31 @@ struct SettingsView: View {
 
                 SurfaceCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("采样")
+                        Text(L("采样"))
                             .font(.headline)
-                        Picker("频率", selection: Binding(
+                        Picker(L("频率"), selection: Binding(
                             get: { state.database.settings.sampleInterval },
                             set: { value in state.updateSettings { $0.sampleInterval = value } }
                         )) {
-                            Text("15 秒").tag(15.0)
-                            Text("30 秒").tag(30.0)
-                            Text("60 秒").tag(60.0)
-                            Text("120 秒").tag(120.0)
+                            Text("15 \(L("秒"))").tag(15.0)
+                            Text("30 \(L("秒"))").tag(30.0)
+                            Text("60 \(L("秒"))").tag(60.0)
+                            Text("120 \(L("秒"))").tag(120.0)
                         }
                         .pickerStyle(.segmented)
 
-                        Toggle("记录窗口标题", isOn: Binding(
+                        Toggle(L("记录窗口标题"), isOn: Binding(
                             get: { state.database.settings.includeWindowTitles },
                             set: { value in state.updateSettings { $0.includeWindowTitles = value } }
                         ))
 
-                        Toggle("保存屏幕快照", isOn: Binding(
+                        Toggle(L("保存屏幕快照"), isOn: Binding(
                             get: { state.database.settings.captureScreenshots },
                             set: { value in state.updateSettings { $0.captureScreenshots = value } }
                         ))
 
                         Stepper(
-                            "快照间隔 \(state.database.settings.screenshotIntervalMinutes) 分钟",
+                            "\(L("快照间隔")) \(state.database.settings.screenshotIntervalMinutes) \(L("分钟"))",
                             value: Binding(
                                 get: { state.database.settings.screenshotIntervalMinutes },
                                 set: { value in state.updateSettings { $0.screenshotIntervalMinutes = value } }
@@ -2007,13 +2022,13 @@ struct SettingsView: View {
         .onAppear {
             identityDraft = state.database.coachIdentity.title
         }
-        .alert("修改身份信息？", isPresented: $showIdentityChangeAlert) {
-            Button("取消", role: .cancel) {}
-            Button("确认归档并修改", role: .destructive) {
+        .alert(L("修改身份信息？"), isPresented: $showIdentityChangeAlert) {
+            Button(L("取消"), role: .cancel) {}
+            Button(L("确认归档并修改"), role: .destructive) {
                 state.updateCoachIdentity(identityDraft)
             }
         } message: {
-            Text("这会归档当前身份下的教练记忆和所有对话，然后为新身份开启新的记忆与对话。")
+            Text(L("这会归档当前身份下的教练记忆和所有对话，然后为新身份开启新的记忆与对话。"))
         }
     }
 
@@ -2038,10 +2053,10 @@ struct ArchivedConversationsCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("已归档对话")
+                Text(L("已归档对话"))
                     .font(.headline)
                 if state.database.archivedCoachConversations.isEmpty {
-                    EmptyStateText("暂无归档")
+                    EmptyStateText(L("暂无归档"))
                 } else {
                     ForEach(groupedArchives, id: \.identity) { group in
                         DisclosureGroup(group.identity) {
@@ -2050,7 +2065,7 @@ struct ArchivedConversationsCard: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(archive.title)
                                             .font(.callout.weight(.semibold))
-                                        Text("\(archive.archivedAt.dateTimeText) · \(archive.messages.count) 条消息")
+                                        Text("\(archive.archivedAt.dateTimeText) · \(archive.messages.count) \(L("条消息"))")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                         if let filePath = archive.filePath {
@@ -2087,7 +2102,7 @@ struct CustomColorPalette: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("自定义全局主题色")
+                Text(L("自定义全局主题色"))
                     .font(.callout.weight(.semibold))
                 Spacer()
                 RoundedRectangle(cornerRadius: 8)
@@ -2155,11 +2170,11 @@ struct AppUsageCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("应用时间")
+                Text(L("应用时间"))
                     .font(.headline)
                 let durations = state.appDurations()
                 if durations.isEmpty {
-                    EmptyStateText("开始记录后显示")
+                    EmptyStateText(L("开始记录后显示"))
                 } else {
                     let maxMinutes = max(durations.first?.minutes ?? 1, 1)
                     ForEach(durations.prefix(8)) { item in
@@ -2168,7 +2183,7 @@ struct AppUsageCard: View {
                                 Text(item.appName)
                                     .lineLimit(1)
                                 Spacer()
-                                Text("\(item.minutes) 分")
+                                Text("\(item.minutes) \(L("分"))")
                                     .foregroundStyle(.secondary)
                             }
                             GeometryReader { proxy in
@@ -2196,14 +2211,14 @@ struct TimelineCard: View {
     var body: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: 14) {
-                Text("窗口轨迹")
+                Text(L("窗口轨迹"))
                     .font(.headline)
                 let blocks = ActivityAnalyzer.timelineBlocks(
                     from: state.todaysSamples(),
                     sampleInterval: state.database.settings.sampleInterval
                 )
                 if blocks.isEmpty {
-                    EmptyStateText("暂无轨迹")
+                    EmptyStateText(L("暂无轨迹"))
                 } else {
                     ForEach(Array(blocks.suffix(limit).enumerated()), id: \.offset) { _, block in
                         HStack(alignment: .top, spacing: 10) {

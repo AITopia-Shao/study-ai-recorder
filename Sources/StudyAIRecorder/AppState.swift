@@ -12,11 +12,11 @@ enum AppSection: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .today: return "今日"
-        case .planning: return "规划"
-        case .monitor: return "监控"
-        case .coach: return "教练"
-        case .settings: return "设置"
+        case .today: return L("今日")
+        case .planning: return L("规划")
+        case .monitor: return L("监控")
+        case .coach: return L("教练")
+        case .settings: return L("设置")
         }
     }
 
@@ -84,7 +84,7 @@ final class AppState: ObservableObject {
     func saveAPIKey() {
         do {
             try KeychainStore.saveAPIKey(apiKeyDraft)
-            statusMessage = "API Key 已保存到钥匙串"
+            statusMessage = L("API Key 已保存到钥匙串")
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -100,13 +100,13 @@ final class AppState: ObservableObject {
 
     var coachIdentityTitle: String {
         let clean = database.coachIdentity.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return clean.isEmpty ? "未设置身份" : clean
+        return clean.isEmpty ? L("未设置身份") : clean
     }
 
     func startNewCoachConversation() {
         let conversation = CoachConversation(
             identityId: database.coachIdentity.id,
-            title: "对话 \(Date().dateTimeText)",
+            title: "\(L("对话")) \(Date().dateTimeText)",
             createdAt: Date(),
             updatedAt: Date(),
             messages: []
@@ -139,7 +139,7 @@ final class AppState: ObservableObject {
         if database.coachConversations.isEmpty {
             let fresh = CoachConversation(
                 identityId: database.coachIdentity.id,
-                title: "新对话",
+                title: L("新对话"),
                 messages: []
             )
             database.coachConversations = [fresh]
@@ -175,17 +175,17 @@ final class AppState: ObservableObject {
 
         guard oldTitle != clean else { return }
 
-        archiveAllCoachConversations(reason: "身份信息从“\(oldTitle)”修改为“\(clean)”")
+        archiveAllCoachConversations(reason: "\(L("身份信息从")) “\(oldTitle)” \(L("修改为")) “\(clean)”")
         database.coachIdentity = CoachIdentityProfile(title: clean)
         database.coachMemory = CoachMemory()
         database.coachMessages = []
         let greeting = CoachMessage(
             role: .assistant,
-            content: "已切换到“\(clean)”身份。我会基于这个身份重新建立对话记忆。"
+            content: "\(L("已切换到身份")) “\(clean)”. \(L("我会基于这个身份重新建立对话记忆。"))"
         )
         let conversation = CoachConversation(
             identityId: database.coachIdentity.id,
-            title: "新身份对话",
+            title: L("新身份对话"),
             messages: [greeting]
         )
         database.coachConversations = [conversation]
@@ -210,7 +210,7 @@ final class AppState: ObservableObject {
                 title: cleanTitle,
                 note: note.trimmingCharacters(in: .whitespacesAndNewlines),
                 mode: .plan,
-                project: project.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "学习" : project,
+                project: project.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? L("学习") : project,
                 startDate: startDate,
                 targetDate: targetDate,
                 estimatedMinutes: max(5, estimatedMinutes),
@@ -241,7 +241,7 @@ final class AppState: ObservableObject {
         if let note { database.tasks[index].note = note.trimmingCharacters(in: .whitespacesAndNewlines) }
         if let project {
             let clean = project.trimmingCharacters(in: .whitespacesAndNewlines)
-            database.tasks[index].project = clean.isEmpty ? "学习" : clean
+            database.tasks[index].project = clean.isEmpty ? L("学习") : clean
         }
         if let startDate { database.tasks[index].startDate = startDate }
         if let targetDate { database.tasks[index].targetDate = targetDate }
@@ -292,13 +292,13 @@ final class AppState: ObservableObject {
             StudyGoal(
                 title: cleanTitle,
                 purpose: purpose.trimmingCharacters(in: .whitespacesAndNewlines),
-                metric: metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "完成可验证产出" : metric,
+                metric: metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? L("完成可验证产出") : metric,
                 targetDate: Calendar.current.date(byAdding: .day, value: max(1, days), to: Date()) ?? Date(),
                 progress: 0,
                 milestones: [
-                    Milestone(title: "明确下一步动作", isDone: false),
-                    Milestone(title: "完成一次阶段复盘", isDone: false),
-                    Milestone(title: "产出可展示成果", isDone: false)
+                    Milestone(title: L("明确下一步动作"), isDone: false),
+                    Milestone(title: L("完成一次阶段复盘"), isDone: false),
+                    Milestone(title: L("产出可展示成果"), isDone: false)
                 ],
                 createdAt: Date()
             ),
@@ -430,7 +430,7 @@ final class AppState: ObservableObject {
         do {
             let summary = try await client.generateSummary(date: date, tasks: tasks, goals: goals, samples: samples)
             upsert(summary)
-            statusMessage = "教练复盘已生成"
+            statusMessage = L("教练复盘已生成")
         } catch {
             let fallback = AIClient.localSummary(
                 date: date,
@@ -441,7 +441,7 @@ final class AppState: ObservableObject {
                 reason: error.localizedDescription
             )
             upsert(fallback)
-            statusMessage = "已生成本地复盘：\(error.localizedDescription)"
+            statusMessage = "\(L("已生成本地复盘")): \(error.localizedDescription)"
         }
     }
 
@@ -464,7 +464,7 @@ final class AppState: ObservableObject {
             response = try await client.runPlanningCoach(input: clean, database: database)
         } catch {
             response = PlanningCoachAgent.localFallback(input: clean, database: database, reason: error.localizedDescription)
-            statusMessage = "教练使用本地降级：\(error.localizedDescription)"
+            statusMessage = "\(L("教练使用本地降级")): \(error.localizedDescription)"
         }
 
         let toolResults = applyCoachActions(response.actions)
@@ -519,22 +519,22 @@ final class AppState: ObservableObject {
             case .addPlan:
                 let title = action.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 guard !title.isEmpty else {
-                    return CoachToolResult(action: action.type, success: false, message: "新增计划失败：缺少标题。")
+                    return CoachToolResult(action: action.type, success: false, message: L("新增计划失败：缺少标题。"))
                 }
                 addTask(
                     title: title,
                     note: action.note ?? "",
-                    project: action.project ?? "学习",
+                    project: action.project ?? L("学习"),
                     startDate: dateFromDayKey(action.startDate) ?? Date(),
                     targetDate: dateFromDayKey(action.targetDate ?? action.date) ?? dateFromDayKey(action.startDate) ?? Date(),
                     estimatedMinutes: action.estimatedMinutes ?? 45,
                     priority: action.priority ?? .medium
                 )
-                return CoachToolResult(action: action.type, success: true, message: "已新增计划：\(title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已新增计划")): \(title).")
 
             case .updatePlan:
                 guard let task = findTask(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "更新计划失败：未找到目标计划。")
+                    return CoachToolResult(action: action.type, success: false, message: L("更新计划失败：未找到目标计划。"))
                 }
                 updateTask(
                     task,
@@ -546,97 +546,97 @@ final class AppState: ObservableObject {
                     estimatedMinutes: action.estimatedMinutes,
                     priority: action.priority
                 )
-                return CoachToolResult(action: action.type, success: true, message: "已更新计划：\(task.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已更新计划")): \(task.title).")
 
             case .deletePlan:
                 guard let task = findTask(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "删除计划失败：未找到目标计划。")
+                    return CoachToolResult(action: action.type, success: false, message: L("删除计划失败：未找到目标计划。"))
                 }
                 removeTask(task)
-                return CoachToolResult(action: action.type, success: true, message: "已删除计划：\(task.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已删除计划")): \(task.title).")
 
             case .completePlan:
                 guard let task = findTask(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "完成计划失败：未找到目标计划。")
+                    return CoachToolResult(action: action.type, success: false, message: L("完成计划失败：未找到目标计划。"))
                 }
                 completeTask(task, title: action.title ?? "", body: action.body ?? "")
-                return CoachToolResult(action: action.type, success: true, message: "已标记完成：\(task.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已标记完成")): \(task.title).")
 
             case .addPlanLog:
                 guard let task = findTask(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "添加计划日记失败：未找到目标计划。")
+                    return CoachToolResult(action: action.type, success: false, message: L("添加计划日记失败：未找到目标计划。"))
                 }
                 appendTaskJournal(task, title: action.title ?? "", body: action.body ?? "")
-                return CoachToolResult(action: action.type, success: true, message: "已添加计划日记：\(task.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已添加计划日记")): \(task.title).")
 
             case .addGoal:
                 let title = action.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 guard !title.isEmpty else {
-                    return CoachToolResult(action: action.type, success: false, message: "新增目标失败：缺少标题。")
+                    return CoachToolResult(action: action.type, success: false, message: L("新增目标失败：缺少标题。"))
                 }
                 addGoal(title: title, purpose: action.purpose ?? "", metric: action.metric ?? "", days: action.days ?? 14)
-                return CoachToolResult(action: action.type, success: true, message: "已新增目标：\(title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已新增目标")): \(title).")
 
             case .updateGoal:
                 guard let goal = findGoal(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "更新目标失败：未找到目标。")
+                    return CoachToolResult(action: action.type, success: false, message: L("更新目标失败：未找到目标。"))
                 }
                 updateGoal(goal, title: action.title, purpose: action.purpose, metric: action.metric, days: action.days)
-                return CoachToolResult(action: action.type, success: true, message: "已更新目标：\(goal.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已更新目标")): \(goal.title).")
 
             case .deleteGoal:
                 guard let goal = findGoal(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "删除目标失败：未找到目标。")
+                    return CoachToolResult(action: action.type, success: false, message: L("删除目标失败：未找到目标。"))
                 }
                 removeGoal(goal)
-                return CoachToolResult(action: action.type, success: true, message: "已删除目标：\(goal.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已删除目标")): \(goal.title).")
 
             case .updateGoalProgress:
                 guard let goal = findGoal(action.targetId), let progress = action.progress else {
-                    return CoachToolResult(action: action.type, success: false, message: "更新目标进度失败：缺少目标或进度。")
+                    return CoachToolResult(action: action.type, success: false, message: L("更新目标进度失败：缺少目标或进度。"))
                 }
                 updateGoalProgress(goal, progress: progress)
-                return CoachToolResult(action: action.type, success: true, message: "已更新目标进度：\(goal.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已更新目标进度")): \(goal.title).")
 
             case .addGoalLog:
                 guard let goal = findGoal(action.targetId) else {
-                    return CoachToolResult(action: action.type, success: false, message: "添加目标日志失败：未找到目标。")
+                    return CoachToolResult(action: action.type, success: false, message: L("添加目标日志失败：未找到目标。"))
                 }
                 appendGoalLog(goal, title: action.title ?? "", body: action.body ?? "")
-                return CoachToolResult(action: action.type, success: true, message: "已添加目标日志：\(goal.title)。")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已添加目标日志")): \(goal.title).")
 
             case .readPlanningContext:
                 let context = PlanningCoachContext(database: database)
                 return CoachToolResult(
                     action: action.type,
                     success: true,
-                    message: "已读取上下文：计划 \(database.tasks.count) 个，目标 \(database.goals.count) 个。最近日志：\(String(context.logsText.prefix(500)))"
+                    message: "\(L("已读取上下文")): \(L("计划")) \(database.tasks.count), \(L("目标")) \(database.goals.count). \(L("最近日志")): \(String(context.logsText.prefix(500)))"
                 )
 
             case .listCoachFiles:
                 let names = coachFiles().map(\.name).joined(separator: "、")
-                return CoachToolResult(action: action.type, success: true, message: names.isEmpty ? "教练文件区暂无文件。" : "教练文件：\(names)")
+                return CoachToolResult(action: action.type, success: true, message: names.isEmpty ? L("教练文件区暂无文件。") : "\(L("教练文件")): \(names)")
 
             case .readCoachFile:
                 let fileName = safeCoachFileName(action.fileName)
                 guard let content = readCoachFile(fileName: fileName) else {
-                    return CoachToolResult(action: action.type, success: false, message: "读取文件失败：\(fileName)。")
+                    return CoachToolResult(action: action.type, success: false, message: "\(L("读取文件失败")): \(fileName).")
                 }
-                return CoachToolResult(action: action.type, success: true, message: "已读取 \(fileName)：\(String(content.prefix(1200)))")
+                return CoachToolResult(action: action.type, success: true, message: "\(L("已读取")) \(fileName): \(String(content.prefix(1200)))")
 
             case .writeCoachFile:
                 let fileName = safeCoachFileName(action.fileName)
                 let content = action.content ?? action.body ?? ""
                 guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    return CoachToolResult(action: action.type, success: false, message: "写入文件失败：内容为空。")
+                    return CoachToolResult(action: action.type, success: false, message: L("写入文件失败：内容为空。"))
                 }
                 do {
                     let url = coachFilesDirectory().appendingPathComponent(fileName)
                     try FileManager.default.createDirectory(at: coachFilesDirectory(), withIntermediateDirectories: true)
                     try content.write(to: url, atomically: true, encoding: .utf8)
-                    return CoachToolResult(action: action.type, success: true, message: "已写入教练文件：\(fileName)。")
+                    return CoachToolResult(action: action.type, success: true, message: "\(L("已写入教练文件")): \(fileName).")
                 } catch {
-                    return CoachToolResult(action: action.type, success: false, message: "写入文件失败：\(error.localizedDescription)")
+                    return CoachToolResult(action: action.type, success: false, message: "\(L("写入文件失败")): \(error.localizedDescription)")
                 }
             }
         }
@@ -682,7 +682,7 @@ final class AppState: ObservableObject {
 
         let conversation = CoachConversation(
             identityId: database.coachIdentity.id,
-            title: "对话 \(Date().dateTimeText)",
+            title: "\(L("对话")) \(Date().dateTimeText)",
             messages: []
         )
         database.coachConversations.insert(conversation, at: 0)
@@ -695,7 +695,10 @@ final class AppState: ObservableObject {
         database.coachConversations[index].messages.append(message)
         database.coachConversations[index].updatedAt = message.createdAt
         if message.role == .user,
-           database.coachConversations[index].title.hasPrefix("对话 ") || database.coachConversations[index].title == "新对话" {
+           database.coachConversations[index].title.hasPrefix("对话 ")
+            || database.coachConversations[index].title.hasPrefix("Conversation ")
+            || database.coachConversations[index].title == "新对话"
+            || database.coachConversations[index].title == "New Chat" {
             database.coachConversations[index].title = String(message.content.prefix(18))
         }
         database.coachMessages = database.coachConversations[index].messages
@@ -710,12 +713,12 @@ final class AppState: ObservableObject {
             return
         }
 
-        archiveConversation(conversation, reason: "每日自动归档")
+        archiveConversation(conversation, reason: L("每日自动归档"))
         database.coachConversations.removeAll { $0.id == conversation.id }
 
         let fresh = CoachConversation(
             identityId: database.coachIdentity.id,
-            title: "今日对话 \(Date().monthDayText)",
+            title: "\(L("今日对话")) \(Date().monthDayText)",
             messages: []
         )
         database.coachConversations.insert(fresh, at: 0)
@@ -782,7 +785,7 @@ final class AppState: ObservableObject {
             try body.write(to: url, atomically: true, encoding: .utf8)
             return url.path
         } catch {
-            statusMessage = "归档文件写入失败：\(error.localizedDescription)"
+            statusMessage = "\(L("归档文件写入失败")): \(error.localizedDescription)"
             return nil
         }
     }
@@ -855,7 +858,7 @@ final class AppState: ObservableObject {
 
     private func safeArchiveFolderName(_ value: String) -> String {
         let clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return "未设置身份" }
+        guard !clean.isEmpty else { return L("未设置身份") }
         let invalid = CharacterSet(charactersIn: "/:\\?%*|\"<>")
         let mapped = clean.unicodeScalars.map { scalar -> Character in
             invalid.contains(scalar) ? "-" : Character(scalar)

@@ -7,6 +7,7 @@ const { randomUUID } = require("crypto");
 const DEFAULT_SETTINGS = {
   baseURL: "https://api.openai.com/v1",
   model: "gpt-4o-mini",
+  language: "en",
   visualTheme: "day",
   sampleInterval: 30,
   includeWindowTitles: true,
@@ -64,6 +65,7 @@ async function readDatabase() {
     const raw = await fs.readFile(databasePath(), "utf8");
     const parsed = JSON.parse(raw);
     const settings = { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) };
+    settings.language = normalizeLanguage(settings.language);
     if (settings.visualTheme === "boulevard" || settings.visualTheme === "system") settings.visualTheme = "day";
     if (settings.visualTheme === "starlight") settings.visualTheme = "night";
     settings.customSidebarColor = {
@@ -78,6 +80,26 @@ async function readDatabase() {
   } catch {
     return JSON.parse(JSON.stringify(DEFAULT_DB));
   }
+}
+
+function normalizeLanguage(value) {
+  return ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "es"].includes(value) ? value : "en";
+}
+
+function languageName(value) {
+  return {
+    en: "English",
+    "zh-Hans": "Simplified Chinese",
+    "zh-Hant": "Traditional Chinese",
+    ja: "Japanese",
+    ko: "Korean",
+    fr: "French",
+    es: "Spanish"
+  }[normalizeLanguage(value)] || "English";
+}
+
+function languageInstruction(settings = {}) {
+  return `Reply to the user in ${languageName(settings.language)}. Keep tool action JSON keys unchanged.`;
 }
 
 async function writeDatabase(next) {
@@ -414,12 +436,12 @@ ${day.screenText || "暂无"}
 
 Return JSON only:
 {
-  "executive_summary": "一句中文总评，60字以内",
-  "highlights": ["恰好2条"],
-  "obstacles": ["恰好2条"],
-  "recommendations": ["恰好3条"],
-  "tomorrow_plan": ["恰好3条"],
-  "data_warnings": ["0到2条"]
+  "executive_summary": "one short overall judgment in the selected language",
+  "highlights": ["exactly 2 items in the selected language"],
+  "obstacles": ["exactly 2 items in the selected language"],
+  "recommendations": ["exactly 3 items in the selected language"],
+  "tomorrow_plan": ["exactly 3 items in the selected language"],
+  "data_warnings": ["0 to 2 items in the selected language"]
 }
 `;
 
@@ -434,7 +456,7 @@ Return JSON only:
         model: db.settings.model,
         temperature: 0.1,
         messages: [
-          { role: "system", content: "你是 Trace 教练的总结子代理。只使用证据，评分已锁定，不要改分。只返回 JSON。" },
+          { role: "system", content: `You are Trace Coach's summary sub-agent. Use evidence only. The score is locked; do not change it. Return JSON only. ${languageInstruction(db.settings)}` },
           { role: "user", content: prompt }
         ]
       })
@@ -569,7 +591,8 @@ async function runPlanningCoach(db, userInput) {
 
   const endpoint = `${String(db.settings.baseURL || "").replace(/\/+$/, "")}/chat/completions`;
   const system = `
-你是 Trace 的“教练”，不是单纯总结工具。你采用 claw-code 式 agent 运行边界：会话消息、工具动作、权限边界、文件操作、记忆更新、上下文压缩。
+You are Trace's Coach, not a simple summary tool. You operate with claw-code-style agent boundaries: conversation messages, tool actions, permission boundaries, file operations, memory updates, and context compaction.
+Language: ${languageInstruction(db.settings)}
 
 语义：
 - 计划 = 短期、明确、可执行的战术动作。
@@ -588,7 +611,7 @@ read_planning_context, list_coach_files, read_coach_file, write_coach_file.
 
 只返回 JSON:
 {
-  "reply": "给用户看的中文回复",
+  "reply": "natural language reply in the selected language",
   "actions": [{"type":"add_plan","target_id":"可选","title":"可选","note":"可选","project":"可选","start_date":"yyyy-MM-dd","target_date":"yyyy-MM-dd","date":"yyyy-MM-dd","estimated_minutes":45,"priority":"low|medium|high","purpose":"可选","metric":"可选","days":30,"body":"可选","file_name":"可选.md","content":"可选"}],
   "memory_update": "可选",
   "key_facts": [],
@@ -704,6 +727,7 @@ ipcMain.handle("database:load", async () => {
 ipcMain.handle("database:save", async (_event, db) => {
   const previous = await readDatabase();
   const settings = { ...DEFAULT_SETTINGS, ...(db.settings || {}) };
+  settings.language = normalizeLanguage(settings.language);
   if (settings.visualTheme === "boulevard" || settings.visualTheme === "system") settings.visualTheme = "day";
   if (settings.visualTheme === "starlight") settings.visualTheme = "night";
   settings.customSidebarColor = {

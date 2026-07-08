@@ -196,7 +196,7 @@ struct PlanningCoachContext: Hashable {
     init(database: AppDatabase, date: Date = Date()) {
         self.date = date
         let cleanIdentity = database.coachIdentity.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        identityText = cleanIdentity.isEmpty ? "未设置身份" : cleanIdentity
+        identityText = cleanIdentity.isEmpty ? L("未设置身份") : cleanIdentity
 
         let plans = database.tasks.sorted {
             if $0.targetDate == $1.targetDate {
@@ -204,19 +204,19 @@ struct PlanningCoachContext: Hashable {
             }
             return $0.targetDate < $1.targetDate
         }
-        plansText = plans.isEmpty ? "无计划" : plans.map { task in
-            let done = task.completedAt.map { "完成：\($0.dateTimeText)" } ?? "未完成"
+        plansText = plans.isEmpty ? L("无计划") : plans.map { task in
+            let done = task.completedAt.map { "\(L("完成")):\($0.dateTimeText)" } ?? L("未完成")
             let journal = task.journal.suffix(3).map { "\($0.createdAt.dateTimeText)：\($0.title) - \($0.body)" }.joined(separator: "；")
             return """
-            - id=\(task.id.uuidString) | 开始：\(task.startDate.dayKey) | 完成：\(task.targetDate.dayKey) | [\(task.status.title)] \(task.title) | 项目：\(task.project) | 预计：\(task.estimatedMinutes) 分钟 | 优先级：\(task.priority.title) | \(done) | 备注：\(task.note) | 完成记录：\(task.completionNote) | 日记：\(journal)
+            - id=\(task.id.uuidString) | \(L("开始")):\(task.startDate.dayKey) | \(L("完成")):\(task.targetDate.dayKey) | [\(task.status.title)] \(task.title) | \(L("项目")):\(task.project) | \(L("预计")):\(task.estimatedMinutes) \(L("分钟")) | \(L("优先级")):\(task.priority.title) | \(done) | \(L("备注")):\(task.note) | \(L("完成记录")):\(task.completionNote) | \(L("日记")):\(journal)
             """
         }.joined(separator: "\n")
 
-        goalsText = database.goals.isEmpty ? "无目标" : database.goals.map { goal in
-            let milestones = goal.milestones.map { "\($0.isDone ? "已完成" : "未完成")-\($0.title)" }.joined(separator: "；")
+        goalsText = database.goals.isEmpty ? L("无目标") : database.goals.map { goal in
+            let milestones = goal.milestones.map { "\($0.isDone ? L("已完成") : L("未完成"))-\($0.title)" }.joined(separator: "；")
             let logs = goal.logs.suffix(5).map { "\($0.createdAt.dateTimeText)：\($0.title) - \($0.body)" }.joined(separator: "；")
             return """
-            - id=\(goal.id.uuidString) | \(goal.title) | 目的：\(goal.purpose) | 衡量：\(goal.metric) | 截止：\(goal.targetDate.dayKey) | 里程碑：\(milestones) | 阶段日志：\(logs)
+            - id=\(goal.id.uuidString) | \(goal.title) | \(L("目的")):\(goal.purpose) | \(L("衡量")):\(goal.metric) | \(L("截止")):\(goal.targetDate.dayKey) | \(L("里程碑")):\(milestones) | \(L("阶段日志")):\(logs)
             """
         }.joined(separator: "\n")
 
@@ -227,28 +227,28 @@ struct PlanningCoachContext: Hashable {
             goal.logs.map { "目标《\(goal.title)》 \($0.createdAt.dateTimeText)：\($0.title) - \($0.body)" }
         }
         let allLogs = (planLogs + goalLogs).suffix(60)
-        logsText = allLogs.isEmpty ? "暂无日志" : allLogs.joined(separator: "\n")
+        logsText = allLogs.isEmpty ? L("暂无日志") : allLogs.joined(separator: "\n")
 
         let samples = ActivityAnalyzer.samples(on: date, from: database.samples)
         let durations = ActivityAnalyzer.durations(from: samples, sampleInterval: database.settings.sampleInterval)
         let timeline = ActivityAnalyzer.timelineBlocks(from: samples, sampleInterval: database.settings.sampleInterval).suffix(30)
         activityText = """
-        记录时长：\(ActivityAnalyzer.totalMinutes(from: samples, sampleInterval: database.settings.sampleInterval)) 分钟
-        应用分布：\(durations.prefix(12).map { "\($0.appName) \($0.minutes) 分钟" }.joined(separator: "、"))
-        窗口轨迹：
-        \(timeline.isEmpty ? "暂无窗口轨迹" : timeline.map { "- \($0)" }.joined(separator: "\n"))
+        \(L("记录时长")):\(ActivityAnalyzer.totalMinutes(from: samples, sampleInterval: database.settings.sampleInterval)) \(L("分钟"))
+        \(L("应用分布")):\(durations.prefix(12).map { "\($0.appName) \($0.minutes) \(L("分钟"))" }.joined(separator: "、"))
+        \(L("窗口轨迹")):
+        \(timeline.isEmpty ? L("暂无窗口轨迹") : timeline.map { "- \($0)" }.joined(separator: "\n"))
         """
 
         let summaries = database.summaries.sorted { $0.generatedAt > $1.generatedAt }.prefix(8)
-        summariesText = summaries.isEmpty ? "暂无总结" : summaries.map {
+        summariesText = summaries.isEmpty ? L("暂无总结") : summaries.map {
             "- \($0.dateKey) | \($0.generatedAt.dateTimeText) | \(String($0.body.prefix(260)))"
         }.joined(separator: "\n")
 
         memoryText = """
-        身份：\(identityText)
-        摘要：\(database.coachMemory.summary.isEmpty ? "暂无长期记忆" : database.coachMemory.summary)
-        关键事实：\(database.coachMemory.keyFacts.joined(separator: "；"))
-        更新时间：\(database.coachMemory.updatedAt?.dateTimeText ?? "无")
+        \(L("身份")):\(identityText)
+        \(L("摘要")):\(database.coachMemory.summary.isEmpty ? L("暂无长期记忆") : database.coachMemory.summary)
+        \(L("关键事实")):\(database.coachMemory.keyFacts.joined(separator: "；"))
+        \(L("更新时间")):\(database.coachMemory.updatedAt?.dateTimeText ?? L("无"))
         """
 
         recentMessagesText = database.currentCoachMessages.suffix(16).map {
@@ -264,7 +264,8 @@ enum PlanningCoachPromptBuilder {
             .joined(separator: "\n")
 
         return """
-        你是 Trace 的“教练”，不是单纯总结工具。你采用 claw-code 式 agent 运行边界：会话消息、工具动作、权限边界、文件操作、记忆更新、上下文压缩。
+        You are Trace's Coach, not a simple summary tool. You operate with claw-code-style agent boundaries: conversation messages, tool actions, permission boundaries, file operations, memory updates, and context compaction.
+        Language: \(settings.language.promptInstruction)
 
         核心语义：
         - 计划 = 短期、明确、可执行的战术动作，必须有日期、完成信号或预计时长。
@@ -296,34 +297,34 @@ enum PlanningCoachPromptBuilder {
         已启用总结能力：
         \(skills)
 
-        只返回 JSON 对象，不要把 JSON 包进 Markdown 代码块。reply 字段可以使用 Markdown 标题、列表和 LaTeX 数学公式。JSON schema:
+        只返回 JSON 对象，不要把 JSON 包进 Markdown 代码块。Use the selected language for reply, memory_update, key_facts, and daily_summary values. reply 字段可以使用 Markdown 标题、列表和 LaTeX 数学公式。JSON schema:
         {
-          "reply": "给用户看的自然语言回复",
+          "reply": "natural language reply in the selected language",
           "actions": [
             {
               "type": "add_plan|update_plan|delete_plan|complete_plan|add_plan_log|add_goal|update_goal|delete_goal|add_goal_log|read_planning_context|list_coach_files|read_coach_file|write_coach_file",
-              "target_id": "可选 UUID",
-              "title": "可选",
-              "note": "可选",
-              "project": "可选",
-              "date": "yyyy-MM-dd 可选，兼容旧字段，等同 target_date",
-              "start_date": "yyyy-MM-dd 可选",
-              "target_date": "yyyy-MM-dd 可选",
+              "target_id": "optional UUID",
+              "title": "optional",
+              "note": "optional",
+              "project": "optional",
+              "date": "yyyy-MM-dd optional, legacy alias for target_date",
+              "start_date": "yyyy-MM-dd optional",
+              "target_date": "yyyy-MM-dd optional",
               "estimated_minutes": 45,
-              "priority": "low|medium|high 可选",
-              "purpose": "可选",
-              "metric": "可选",
+              "priority": "low|medium|high optional",
+              "purpose": "optional",
+              "metric": "optional",
               "days": 14,
               "progress": 0.25,
-              "body": "日志正文或完成记录",
-              "file_name": "可选文件名.md",
-              "content": "可选文件内容"
+              "body": "log body or completion note",
+              "file_name": "optional file name.md",
+              "content": "optional file content"
             }
           ],
-          "memory_update": "可选，更新长期记忆摘要",
-          "key_facts": ["可选，稳定事实"],
+          "memory_update": "optional long-term memory summary in the selected language",
+          "key_facts": ["optional stable facts in the selected language"],
           "daily_summary": {
-            "executive_summary": "可选",
+            "executive_summary": "optional, selected language",
             "highlights": [],
             "obstacles": [],
             "recommendations": [],
@@ -380,7 +381,7 @@ enum PlanningCoachAgent {
         }
 
         guard let data = jsonText.data(using: .utf8) else {
-            throw AIClientError.badResponse("教练 JSON 编码无效")
+            throw AIClientError.badResponse(L("教练 JSON 编码无效"))
         }
 
         return try JSONDecoder().decode(CoachAgentResponse.self, from: data)
@@ -388,6 +389,7 @@ enum PlanningCoachAgent {
     }
 
     static func localFallback(input: String, database: AppDatabase, reason: String) -> CoachAgentResponse {
+        TraceLocalization.current = database.settings.language
         let context = PlanningCoachContext(database: database)
         let lower = input.lowercased()
         let actions: [CoachAction] = []
@@ -395,7 +397,7 @@ enum PlanningCoachAgent {
         if lower.contains("总结") || lower.contains("复盘") {
             return CoachAgentResponse(
                 reply: """
-                AI 服务暂时不可用，我先用本地数据给出简要复盘：今天记录到 \(ActivityAnalyzer.totalMinutes(from: ActivityAnalyzer.samples(on: Date(), from: database.samples), sampleInterval: database.settings.sampleInterval)) 分钟；今日计划 \(database.tasks.filter { $0.startDate.dayKey <= Date().dayKey && Date().dayKey <= $0.targetDate.dayKey }.count) 个；长期目标 \(database.goals.count) 个。服务原因：\(reason)
+                \(L("AI 服务暂时不可用，我先用本地数据给出简要复盘")): \(L("今天记录到")) \(ActivityAnalyzer.totalMinutes(from: ActivityAnalyzer.samples(on: Date(), from: database.samples), sampleInterval: database.settings.sampleInterval)) \(L("分钟")); \(L("今日计划")) \(database.tasks.filter { $0.startDate.dayKey <= Date().dayKey && Date().dayKey <= $0.targetDate.dayKey }.count); \(L("长期目标")) \(database.goals.count). \(L("服务原因")): \(reason)
                 """,
                 actions: actions,
                 memoryUpdate: database.coachMemory.summary,
@@ -406,7 +408,7 @@ enum PlanningCoachAgent {
         if input.contains("查看") || input.contains("所有") || input.contains("日志") || input.contains("记录") {
             return CoachAgentResponse(
                 reply: """
-                AI 服务暂时不可用，我可以先读取本地上下文。计划：\(database.tasks.count) 个；目标：\(database.goals.count) 个；最近日志：\(String(context.logsText.prefix(500)))。服务原因：\(reason)
+                \(L("AI 服务暂时不可用，我可以先读取本地上下文")). \(L("计划")): \(database.tasks.count); \(L("目标")): \(database.goals.count); \(L("最近日志")): \(String(context.logsText.prefix(500))). \(L("服务原因")): \(reason)
                 """,
                 actions: [.init(type: .readPlanningContext)],
                 memoryUpdate: database.coachMemory.summary,
@@ -415,7 +417,7 @@ enum PlanningCoachAgent {
         }
 
         return CoachAgentResponse(
-            reply: "教练暂时无法调用模型：\(reason)。本地数据仍可查看，计划与目标可以在“规划”里继续编辑。",
+            reply: "\(L("教练暂时无法调用模型")): \(reason). \(L("本地数据仍可查看，计划与目标可以在规划里继续编辑。"))",
             actions: actions,
             memoryUpdate: database.coachMemory.summary,
             keyFacts: database.coachMemory.keyFacts

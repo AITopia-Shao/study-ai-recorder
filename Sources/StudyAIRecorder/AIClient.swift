@@ -5,6 +5,7 @@ struct AIClient {
     let apiKey: String
 
     func generateSummary(date: Date, tasks: [StudyTask], goals: [StudyGoal], samples: [ActivitySample]) async throws -> DailySummary {
+        TraceLocalization.current = settings.language
         let context = LearningDayContext(date: date, tasks: tasks, goals: goals, samples: samples, settings: settings)
         let score = LearningScoreRubric.evaluate(context)
 
@@ -33,6 +34,7 @@ struct AIClient {
     }
 
     static func localSummary(date: Date, tasks: [StudyTask], goals: [StudyGoal], samples: [ActivitySample], settings: AppSettings = AppSettings(), reason: String) -> DailySummary {
+        TraceLocalization.current = settings.language
         let context = LearningDayContext(date: date, tasks: tasks, goals: goals, samples: samples, settings: settings)
         let score = LearningScoreRubric.evaluate(context)
         let report = StudyAgentReport.fallback(context: context, score: score, reason: reason)
@@ -43,11 +45,12 @@ struct AIClient {
             generatedAt: Date(),
             score: score.score,
             body: body,
-            model: "本地启发式"
+            model: L("本地启发式")
         )
     }
 
     func runPlanningCoach(input: String, database: AppDatabase) async throws -> CoachAgentResponse {
+        TraceLocalization.current = settings.language
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AIClientError.missingAPIKey
         }
@@ -61,7 +64,7 @@ struct AIClient {
         let content = try await sendChat(messages: messages, temperature: 0.2)
         return try PlanningCoachAgent.decodeResponse(
             from: content,
-            fallbackReply: "我读完了当前规划上下文，但模型回复没有给出可展示内容。"
+            fallbackReply: L("我读完了当前规划上下文，但模型回复没有给出可展示内容。")
         )
     }
 
@@ -83,14 +86,14 @@ struct AIClient {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            let body = String(data: data, encoding: .utf8) ?? "空响应"
+            let body = String(data: data, encoding: .utf8) ?? L("空响应")
             throw AIClientError.badResponse(body)
         }
 
         let decoded = try JSONDecoder().decode(ChatResponse.self, from: data)
         let content = decoded.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let content, !content.isEmpty else {
-            throw AIClientError.badResponse("AI 没有返回可读内容。")
+            throw AIClientError.badResponse(L("AI 没有返回可读内容。"))
         }
         return content
     }
@@ -114,7 +117,7 @@ struct AIClient {
         }
 
         guard let data = jsonText.data(using: .utf8) else {
-            throw AIClientError.badResponse("AI JSON 编码无效")
+            throw AIClientError.badResponse(L("AI JSON 编码无效"))
         }
         return try JSONDecoder().decode(StudyAgentReport.self, from: data)
     }
@@ -128,11 +131,11 @@ enum AIClientError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            return "还没有保存 API Key"
+            return L("还没有保存 API Key")
         case .invalidBaseURL:
-            return "API URL 无效"
+            return L("API URL 无效")
         case .badResponse(let body):
-            return "AI 服务返回异常：\(body)"
+            return "\(L("AI 服务返回异常")): \(body)"
         }
     }
 }

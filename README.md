@@ -17,6 +17,7 @@ The app is designed for learners and builders who want a private, local-first re
 - Stable review pipeline with deterministic local scoring
 - Day, night, and custom 18-bit global theme colors
 - Markdown and LaTeX rendering in coach messages
+- Language switching with English by default, plus Simplified Chinese, Traditional Chinese, Japanese, Korean, French, and Spanish
 
 ## Coach Agent
 
@@ -41,6 +42,10 @@ The coach can:
 - Monitor: recording duration, current foreground app/window, app usage, and window timeline
 - Coach: interactive conversation, planning actions, memory, Markdown/LaTeX rendering, and daily review
 - Settings: identity, archived conversations, API, global theme, sampling, OCR, and agent skill settings
+
+## Languages
+
+Trace defaults to English. Open Settings -> Appearance -> Language to switch the app to Simplified Chinese, Traditional Chinese, Japanese, Korean, French, or Spanish. The Coach is instructed to reply, summarize, and update memory in the selected language while keeping structured planning action fields stable.
 
 ## Requirements
 
@@ -75,30 +80,30 @@ The generated app bundle is ignored by git and lives under `dist/`.
 
 ```bash
 chmod +x scripts/package_release.sh
-scripts/package_release.sh 0.1.0
+scripts/package_release.sh 0.3.11
 ```
 
 This creates a macOS package:
 
-- `dist/release/Trace-v0.1.0-macOS-arm64.zip`
-- `dist/release/Trace-v0.1.0-macOS-arm64.zip.sha256`
+- `dist/release/Trace-v0.3.11-macOS-arm64.zip`
+- `dist/release/Trace-v0.3.11-macOS-arm64.zip.sha256`
 
 Current public downloads are published from GitHub Releases. Tagged releases also build a Windows installer:
 
-- `Trace-v0.1.0-Windows-x64-Setup.exe`
-- `Trace-v0.1.0-Windows-x64-Setup.exe.sha256`
+- `Trace-v0.3.11-Windows-x64-Setup.exe`
+- `Trace-v0.3.11-Windows-x64-Setup.exe.sha256`
 
 To package the Windows app locally from this repository:
 
 ```bash
 chmod +x scripts/package_windows.sh
-scripts/package_windows.sh 0.1.0
+scripts/package_windows.sh 0.3.11
 ```
 
 This creates:
 
-- `dist/release/Trace-v0.1.0-Windows-x64-Setup.exe`
-- `dist/release/Trace-v0.1.0-Windows-x64-Setup.exe.sha256`
+- `dist/release/Trace-v0.3.11-Windows-x64-Setup.exe`
+- `dist/release/Trace-v0.3.11-Windows-x64-Setup.exe.sha256`
 
 The Windows app is maintained as a strict Electron parity build for the macOS product surface.
 

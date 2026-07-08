@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.11
+
+- Added app language switching in Settings, defaulting to English.
+- Added Simplified Chinese, Traditional Chinese, Japanese, Korean, French, and Spanish language options.
+- Updated macOS and Windows Coach prompts so replies, summaries, memory updates, and daily reviews follow the selected language while preserving tool-action JSON keys.
+- Localized the main macOS and Windows navigation, settings, planning, today, monitor, coach, empty states, and tool-result messages.
+
 ## 0.3.10
 
 - Replaced macOS and Windows app icons with the provided cropped Trace icon.
